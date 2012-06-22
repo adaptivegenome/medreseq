@@ -1,38 +1,57 @@
-/*
- * SequenceRegions.cpp
- *
- *  Created on: Jun 14, 2012
- *      Author: sunil
- */
+/*********************************************************************
+*
+* SequenceRegions.cpp:The regions wrapper which represents the output and
+* 					  input structure for each region.
+*
+* Author: Sunil Kamalakar, VBI
+* Last modified: 22 June 2012
+*
+*********************************************************************
+*
+* This file is released under the Virginia Tech Non-Commercial
+* Purpose License. A copy of this license has been provided in
+* the Medical Re-sequencing root directory.
+*
+*********************************************************************/
+
 
 #include <iostream>
-#include <sstream>>
+#include <sstream>
+#include <vector>
 
 #include "SequenceRegions.h"
+#include "Utility.h"
 
 using namespace std;
 
+//=============================================================================================================
+//SequenceRegionInput class methods.
+
 SequenceRegionInput::SequenceRegionInput(string region) {
 
-	//We need to extract the required parameters.
-	char* regionCharPtr = new char[region.length()];
-	strcpy(regionCharPtr, region.c_str());
-	char* regionName = strtok(regionCharPtr, ":");
-	long startIndex, endIndex;
+	string regionName("");
+	string rightStr("");
+	long startIndex = 0;
+	long endIndex = 0;
 
-	if(regionName != NULL) {
-		char *rightStr = strtok(NULL, ":");
-		if(rightStr != NULL) {
-			startIndex = atoi(strtok(rightStr, "-"));
-			endIndex = atoi(strtok(NULL, "-"));
+	//First split by : and then by -
+	vector<string> regionArr = Utility::split(region, ":");
+	if(!((string)regionArr[0]).empty() && !((string)regionArr[1]).empty()) {
+
+		regionName = regionArr[0];
+		rightStr = regionArr[1];
+
+		//Reuse the same array.
+		regionArr = Utility::split(rightStr, "-");
+		if(!((string)regionArr[0]).empty() && !((string)regionArr[1]).empty()) {
+			startIndex = atol(((string)regionArr[0]).c_str());
+			endIndex = atol(((string)regionArr[1]).c_str());
 		}
 	}
 
 	this->regionName = regionName;
 	this->startIndex = startIndex;
 	this->endIndex = endIndex;
-
-	delete regionCharPtr;
 }
 
 //The implementations for the SequenceRegion class.
@@ -41,7 +60,31 @@ SequenceRegionInput::SequenceRegionInput(string regionName, long startIndex, lon
 	this->regionName = regionName;
 	this->startIndex = startIndex;
 	this->endIndex = endIndex;
+}
 
+string SequenceRegionInput::convertToRegionFormat(std::string regionName, long startIndex, long endIndex) {
+
+	string retVal;
+
+	string startIndexStr, endIndexStr;
+	stringstream temp("");
+	temp << startIndex;
+	startIndexStr = temp.str();
+	temp.str("");
+	temp << endIndex;
+	endIndexStr = temp.str();
+	temp.str("");
+	temp.clear();
+
+	retVal = regionName + ":" + startIndexStr + "-" + endIndexStr;
+
+	return retVal;
+}
+
+string convertToRegionFormat(std::string regionName, std::string startIndex, std::string endIndex) {
+
+	string retVal = regionName + ":" + startIndex + "-" + endIndex;
+	return retVal;
 }
 
 
@@ -59,18 +102,13 @@ long SequenceRegionInput::getEndIndex() {
 
 string SequenceRegionInput::toString() {
 
-	string regionName = this->getRegionName();
-	string startIndex, endIndex;
-	stringstream temp1, temp2;
-	temp1 << this->getStartIndex();
-	startIndex = temp1.str();
-	temp2 << this->getEndIndex();
-	endIndex = temp2.str();
-
-	string regionStr = regionName + ":" + startIndex + "-" + endIndex;
-
+	string regionStr = convertToRegionFormat(this->getRegionName(),
+												this->getStartIndex(), this->getEndIndex());
 	return regionStr;
 }
+
+//=============================================================================================================
+//SequenceRegionOutput class methods.
 
 SequenceRegionOutput::SequenceRegionOutput(SequenceRegionInput &seqInput, string prev, string target, string next) {
 
@@ -96,7 +134,15 @@ std::string SequenceRegionOutput::getNextSequence() {
 		return nextSequence;
 }
 
-std::string SequenceRegionOutput::getCompleteSequence() {
-	return string(prevSequence + targetSequence + nextSequence);
+std::string SequenceRegionOutput::getCompleteSequence(bool isTargetEnclosed/*=false*/) {
+
+	if(!isTargetEnclosed) {
+		return string(prevSequence + targetSequence + nextSequence);
+	}
+	else {
+		return string(prevSequence + "[" + targetSequence + "]" + nextSequence);
+	}
 }
+
+//=============================================================================================================
 

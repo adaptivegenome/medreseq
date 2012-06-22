@@ -1,18 +1,23 @@
-/*
- * Utility.h
+/*********************************************************************
  *
- *  Created on: Jun 14, 2012
- *      Author: sunil
- */
+ * Utility.h:  The utility class for the project.
+ *
+ * Author: Sunil Kamalakar, VBI
+ * Last modified: 22 June 2012
+ *
+ *********************************************************************
+ *
+ * This file is released under the Virginia Tech Non-Commercial
+ * Purpose License. A copy of this license has been provided in
+ * the Medical Re-sequencing root directory.
+ *
+ *********************************************************************/
 
 #ifndef UTILITY_H_
 #define UTILITY_H_
 
-#include <regex.h>
-#include <fstream>
-
 /*
- * The utility class which defines static methods.
+ * The utility class which defines utility based static methods.
  */
 class Utility {
 
@@ -22,53 +27,29 @@ public:
 	 * Utility method to check if a file exist or not.
 	 * If the file exists then it returns true, if not returns false.
 	 */
-	static bool fileExists(std::string fileName) {
-		bool retVal = true;
-
-		std::ifstream file (fileName.c_str(), std::ifstream::in);
-		if(file.fail()) {
-			retVal = false;
-		}
-
-		return retVal;
-	}
+	static bool fileExists(std::string);
 
 	/*
 	 * Match text against the extended regular expression in
 	 * pattern. Returns true for match, false for no match.
 	 */
-	static bool regexMatch(const char *text, const char *pattern)
-	{
-		bool retVal = false;
-	    int	status;
-	    regex_t regex;
+	static bool regexMatch(const char *, const char *);
 
-	    if (regcomp(&regex, pattern, REG_EXTENDED|REG_NOSUB) != 0) {
-	        return retVal;
-	    }
-	    status = regexec(&regex, text, (size_t) 0, NULL, 0);
+	/*
+	 * This method extracts all the digits from a given string value.
+	 */
+	static int digitFromString(std::string);
 
-	    regfree(&regex);
+	/**
+	 * This method trim the string of white spaces o both sides.
+	 */
+	static void trimString(std::string &);
 
-	    if (status == 0) {
-	        retVal = true;
-	    }
-
-	    return retVal;
-	}
-
-	static int digitFromString(std::string str) {
-
-		std::string data;
-
-		for (unsigned int i = 0; i < str.length(); i++)
-		{
-			if (std::isdigit(str[i]))
-				data += str[i];
-		}
-
-		return atoi(data.c_str());
-	}
+	/**
+	 * This method is used to split a text based on a pattern.
+	 * It returns a vector of strings which contains the split values.
+	 */
+	static std::vector<std::string> split(std::string, std::string);
 
 };
 

@@ -1,9 +1,17 @@
-/*
- * main.cpp : the main program which starts the medical re-validation.
- *
- *  Created on: Jun 8, 2012
- *      Author: Sunil Kamalakar
- */
+/*********************************************************************
+*
+* main.cpp: entry point to the Medical Resequencing command line executable.
+*
+* Author: Sunil Kamalakar, VBI
+* Last modified: 20 June 2012
+*
+*********************************************************************
+*
+* This file is released under the Virginia Tech Non-Commercial
+* Purpose License. A copy of this license has been provided in
+* the project root directory.
+*
+*********************************************************************/
 
 #include <iostream>
 #include <fstream>
@@ -14,11 +22,15 @@
 #include "Primer3Wrapper.h"
 #include "SequenceRegions.h"
 #include "Utility.h"
+#include "ConfigurationLoader.h"
+#include "VCFAdapter.h"
 
 using namespace std;
 
 const static string USAGE_STR = "Usage is ./MedReseq fasta-file sequence/sequence-file";
-const static string PRIMER_SETTINGS_FILE = "primer3-2.3.4/primer3web_v3_0_0_default_settings.txt";
+const static string MAIN_CONFIG_FILE = "essentials/medreseq.config";
+const static string OUTPUT_FILE_NAME_DEFAULT = "output";
+
 
 bool isRegionInput(string input) {
 	return Utility::regexMatch(input.c_str(), SamtoolsWrapper::REGION_INPUT_PATTERN.c_str());
@@ -34,6 +46,10 @@ int main(int argc, char **argv) {
 	//Parameter which indicates if the second command line argument is a file or sequence
 	bool cmdParamIsFile = true;
 
+	//Command line params
+	string fastaFile = argv[1];
+	string regionsInput = argv[2];
+
 	//Validate the command line arguments.
 	if(argc != 3) {
 		cerr <<  USAGE_STR << endl;
@@ -41,16 +57,16 @@ int main(int argc, char **argv) {
 	}
 
 	//Check if the fasta file exists.
-	if(Utility::fileExists(argv[1])) {
+	if(Utility::fileExists(fastaFile)) {
 
-		bool regionsFileExists = Utility::fileExists(argv[2]);
+		bool regionsFileExists = Utility::fileExists(regionsInput);
 		//Now check if the second argument is a file or a direct region input.
 		if(!regionsFileExists) {
-			if(isRegionInput(argv[2])) {
+			if(isRegionInput(regionsInput)) {
 				cmdParamIsFile = false;
 			}
 			else {
-				cerr << "Sequence file does not exist.\n"
+				cerr << "Sequence file either as a list of regions or a VCF file does not exist.\n"
 							"Or Sequence should be in format regionName:startIndex-endIndex. Aborting." << endl;
 				return EXIT_FAILURE;
 			}
@@ -61,12 +77,26 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
+	//Obtain all the configurations and apply them.
+	//TODO: Have a way for the config file to be passed in as a parameter to the binary.
+	ConfigurationHolder configHolder = ConfigurationLoader::obtainConfigurationSettings(MAIN_CONFIG_FILE);
+	ConfigurationLoader::applyConfigurationSetting(configHolder);
+
+	//If there were any errors in the configuration just print them out
+	if(configHolder.isError()) {
+		cerr << configHolder.getErrorMsg() << endl;
+	}
+
+	cout << "Welcome to Medical Re-sequencing!" << endl;
+
 	//The map of sequencename->sequence object.
 	map<string, SequenceRegionOutput> sequencesMap;
 
+	//The wrapper objects for both primer3 and samtools.
 	SamtoolsWrapper samtoolsWrapper;
 	Primer3Wrapper primer3Wrapper;
 
+	//Load the fasta file.
 	if(!samtoolsWrapper.loadFastaFile(argv[1])) {
 		cerr << "Error in loading the fasta index file" << argv[1] << endl;
 		return EXIT_FAILURE;
@@ -81,22 +111,16 @@ int main(int argc, char **argv) {
 		sequencesMap = samtoolsWrapper.retrieveSequencesForRegions(argv[2]);
 	}
 
-	vector<PrimerOutput> primerOuts;
-	vector<SequenceRegionOutput> seqOuts;
-	vector<string> settingsFiles;
-	settingsFiles.push_back(PRIMER_SETTINGS_FILE);
+	cout << "Creating primers for " << sequencesMap.size() << " regions" << endl;
 
-	//Extract all the sequence outputs and put it in an vector.
-	for( map<string, SequenceRegionOutput>::iterator ii=sequencesMap.begin();
-				ii!=sequencesMap.end(); ++ii) {
+	//Now that we have the sequences, we can get the primers generated.
+	vector<string> settingsFiles = configHolder.getSettingsFiles();
+	primer3Wrapper.createPrimers(settingsFiles, sequencesMap, OUTPUT_FILE_NAME_DEFAULT);
 
-		SequenceRegionOutput seqOut = (*ii).second;
-		seqOuts.push_back(seqOut);
-	}
-
-	primerOuts = primer3Wrapper.createPrimers(settingsFiles, seqOuts);
-
-	primer3Wrapper.printPrimer(primerOuts);
+	cout << "The comprehensive output file is: " <<
+				OUTPUT_FILE_NAME_DEFAULT  + "." + Primer3Wrapper::PRIMER_COMPOSITE_FILE_EXTENSION << endl;
+	cout << "The concise primers output file is: " <<
+					OUTPUT_FILE_NAME_DEFAULT  + "." + Primer3Wrapper::PRIMER_TERSE_FILE_EXTENSION << endl;
 
 	return EXIT_SUCCESS;
 }

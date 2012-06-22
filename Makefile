@@ -1,25 +1,55 @@
-# $* is prefix shared by target and dependent;  $@ is name of target file
+#/*********************************************************************
+# *
+# * Makefile:  The makefile for the Medical resequencing project.
+# *
+# * Author: Sunil Kamalakar, VBI
+# * Last modified: 22 June 2012
+# *
+# *********************************************************************
+# *
+# * This file is released under the Virginia Tech Non-Commercial
+# * Purpose License. A copy of this license has been provided in
+# * the Medical Re-sequencing root directory.
+# *
+# *********************************************************************/
 
 all: MedReseq
 
-CFLAGS = -c -O3 -g -D__USE_FIXED_PROTOTYPES__ -Isamtools-0.1.18 -Iprimer3-2.3.4/src 
-OBJS = main.o sequenceRegions.o samWrapper.o primer3wrapper.o
+#define constants
+CPP        = g++
+O_OPTS     = -O3
+CC_OPTS    = -c -g -D__USE_FIXED_PROTOTYPES__ -Wall
+INCLUDES   = -Isamtools -Iprimer3/src
+LIBS	   = -Lprimer3/src -Lsamtools -lbam -lprimer3 -ldpal -loligotm -lthal -lboulder -lz -lm
+
+CFLAGS  = $(CC_OPTS) $(O_OPTS)
+
+OBJS = main.o sequenceRegions.o samWrapper.o primer3wrapper.o vcfExtractor.o utility.o config.o
 NAME = MedReseq
 
 $(NAME): $(OBJS)
-	g++ -o $@ $(OBJS) -g -Llib -Lsrc -lbam -lprimer3 -ldpal -loligotm -lthal -lboulder -lz -lm -Wall -Wl
+	$(CPP) -o $@ $(OBJS) $(LIBS)
 
 main.o:
-	g++ $(CFLAGS) $ src/main.cpp -o $@
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/main.cpp -o $@
 	
 sequenceRegions.o:
-	g++ $(CFLAGS) $ src/SequenceRegions.cpp -o $@
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/SequenceRegions.cpp -o $@
 	
 samWrapper.o:
-	g++ $(CFLAGS) $ src/SamtoolsWrapper.cpp -o $@
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/SamtoolsWrapper.cpp -o $@
 
 primer3wrapper.o:
-	g++ $(CFLAGS) $ src/Primer3Wrapper.cpp -o $@
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/Primer3Wrapper.cpp -o $@
+	
+vcfExtractor.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/VCFAdapter.cpp -o $@
+	
+utility.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/Utility.cpp -o $@
+
+config.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/ConfigurationLoader.cpp -o $@
 	
 clean:
 	rm *.o

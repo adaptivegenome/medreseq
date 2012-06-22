@@ -1,14 +1,22 @@
-/*
- * Primer3Wrapper.cpp
+/*********************************************************************
  *
- *  Created on: Jun 11, 2012
- *      Author: sunil
- */
+ * Primer3Wrapper.cpp:  The facade wrapper around the primer3 library.
+ *
+ * Author: Sunil Kamalakar, VBI
+ * Last modified: 22 June 2012
+ *
+ *********************************************************************
+ *
+ * This file is released under the Virginia Tech Non-Commercial
+ * Purpose License. A copy of this license has been provided in
+ * the Medical Re-sequencing root directory.
+ *
+ *********************************************************************/
+
 
 #include "Primer3Wrapper.h"
-#include "thal.h"
-#include "format_output.h"
 #include "libprimer3.h"
+#include "thal.h"
 #include "read_boulder.h"
 #include "print_boulder.h"
 #include "SequenceRegions.h"
@@ -23,16 +31,23 @@
 
 using namespace std;
 
-//TODO: Do memory management for the C code.
+//TODO: Do memory management for the C code, though the leak seems to grow very slowly.
 
-static void read_thermodynamic_parameters();
+//Assign the static members.
+const std::string Primer3Wrapper::PRIMER_COMPOSITE_FILE_EXTENSION = "medreseq";
+const std::string Primer3Wrapper::PRIMER_TERSE_FILE_EXTENSION = "primers";
+const std::string Primer3Wrapper::PRIMER_THERMO_CONFIG_DEFAULT = "primer3/src/primer3_config/";
+
+
+//=============================================================================================================
+//SinglePrimer class methods.
 
 float SinglePrimer::getAnyTh() const {
-	return any_th;
+	return anyTh;
 }
 
 int SinglePrimer::getGcPercent() const {
-	return gc_percent;
+	return gcPercent;
 }
 
 float SinglePrimer::getHairpin() const {
@@ -56,11 +71,11 @@ int SinglePrimer::getStartIndex() const {
 }
 
 void SinglePrimer::setAnyTh(float anyTh) {
-	any_th = anyTh;
+	this->anyTh = anyTh;
 }
 
 void SinglePrimer::setGcPercent(int gcPercent) {
-	gc_percent = gcPercent;
+	this->gcPercent = gcPercent;
 }
 
 void SinglePrimer::setHairpin(float hairpin) {
@@ -84,19 +99,25 @@ void SinglePrimer::setStartIndex(int startIndex) {
 }
 
 void SinglePrimer::setThreeTh(float threeTh) {
-	three_th = threeTh;
+	this->threeTh = threeTh;
 }
 
 float SinglePrimer::getThreeTh() const {
-	return three_th;
+	return threeTh;
 }
 
-PrimerOutput::PrimerOutput(SequenceRegionOutput &seqOut, const  p3retval *p3retVal, const seq_args *sargs) {
+//=============================================================================================================
+//PrimerOutput class methods.
+
+PrimerOutput::PrimerOutput(SequenceRegionOutput &seqOut, const  p3retval *p3retVal, const seq_args *sargs, string settingsFile) {
 
 	//Fill in the default values for the pair
 	this->seqOutput = seqOut;
+	this->settingsFile = settingsFile;
 
 	if(p3retVal != NULL) {
+
+		//Fill in the parameters form from the p3retVal structure returned by primer3
 
 		if(!pr_is_empty(&p3retVal->warnings)) {
 			this->setWarning(string(p3retVal->warnings.data));
@@ -108,38 +129,46 @@ PrimerOutput::PrimerOutput(SequenceRegionOutput &seqOut, const  p3retval *p3retV
 		if(pr_is_empty(&p3retVal->glob_err) &&
 								pr_is_empty(&p3retVal->per_sequence_err)) {
 
-			this->productSize = p3retVal->best_pairs.pairs[0].product_size;
-			this->pairAnyThCompl = p3retVal->best_pairs.pairs[0].compl_any;
-			this->pairThreeThCompl = p3retVal->best_pairs.pairs[0].compl_end;
-			this->pairTemplateMisprimingTh = p3retVal->best_pairs.pairs[0].template_mispriming;
+			//Atleast a single result needs to be returned
+			if(p3retVal->best_pairs.num_pairs >= 1) {
 
-			 // Pointers for the primer set just printing
-			 primer_rec *fwd, *rev, *intl;
+				this->productSize = p3retVal->best_pairs.pairs[0].product_size;
+				this->pairAnyThCompl = p3retVal->best_pairs.pairs[0].compl_any;
+				this->pairThreeThCompl = p3retVal->best_pairs.pairs[0].compl_end;
+				this->pairTemplateMisprimingTh = p3retVal->best_pairs.pairs[0].template_mispriming;
 
-			 fwd  = p3retVal->best_pairs.pairs[0].left;
-			 rev  = p3retVal->best_pairs.pairs[0].right;
-			 intl = p3retVal->best_pairs.pairs[0].intl;
+				 // Pointers for the primer set just printing
+				 primer_rec *fwd, *rev, *intl;
 
-			//Values for the left primer.
-			this->leftPrimer.setSequence(string(pr_oligo_sequence(sargs, p3retVal->best_pairs.pairs[0].left)));
-			this->leftPrimer.setMeltingTemperature(p3retVal->best_pairs.pairs[0].left->temp);
-			this->leftPrimer.setGcPercent(p3retVal->best_pairs.pairs[0].left->gc_content);
-			this->leftPrimer.setStartIndex(p3retVal->best_pairs.pairs[0].left->start);
-			this->leftPrimer.setLength((int)p3retVal->best_pairs.pairs[0].left->length);
-			this->leftPrimer.setAnyTh(p3retVal->best_pairs.pairs[0].left->self_any);
-			this->leftPrimer.setThreeTh(p3retVal->best_pairs.pairs[0].left->self_end);
-			this->leftPrimer.setHairpin(p3retVal->best_pairs.pairs[0].left->hairpin_th);
+				 fwd  = p3retVal->best_pairs.pairs[0].left;
+				 rev  = p3retVal->best_pairs.pairs[0].right;
+				 intl = p3retVal->best_pairs.pairs[0].intl;
 
-			//Values for the right primer
-			//Values for the left primer.
-			this->rightPrimer.setSequence(string(pr_oligo_rev_c_sequence(sargs, p3retVal->best_pairs.pairs[0].right)));
-			this->rightPrimer.setMeltingTemperature(p3retVal->best_pairs.pairs[0].right->temp);
-			this->rightPrimer.setGcPercent(p3retVal->best_pairs.pairs[0].right->gc_content);
-			this->rightPrimer.setStartIndex(p3retVal->best_pairs.pairs[0].right->start);
-			this->rightPrimer.setLength((int)p3retVal->best_pairs.pairs[0].right->length);
-			this->rightPrimer.setAnyTh(p3retVal->best_pairs.pairs[0].right->self_any);
-			this->rightPrimer.setThreeTh(p3retVal->best_pairs.pairs[0].right->self_end);
-			this->rightPrimer.setHairpin(p3retVal->best_pairs.pairs[0].right->hairpin_th);
+				//Values for the left primer.
+				this->leftPrimer.setSequence(string(pr_oligo_sequence(sargs, p3retVal->best_pairs.pairs[0].left)));
+				this->leftPrimer.setMeltingTemperature(p3retVal->best_pairs.pairs[0].left->temp);
+				this->leftPrimer.setGcPercent(p3retVal->best_pairs.pairs[0].left->gc_content);
+				this->leftPrimer.setStartIndex(p3retVal->best_pairs.pairs[0].left->start);
+				this->leftPrimer.setLength((int)p3retVal->best_pairs.pairs[0].left->length);
+				this->leftPrimer.setAnyTh(p3retVal->best_pairs.pairs[0].left->self_any);
+				this->leftPrimer.setThreeTh(p3retVal->best_pairs.pairs[0].left->self_end);
+				this->leftPrimer.setHairpin(p3retVal->best_pairs.pairs[0].left->hairpin_th);
+
+				//Values for the right primer
+				//Values for the left primer.
+				this->rightPrimer.setSequence(string(pr_oligo_rev_c_sequence(sargs, p3retVal->best_pairs.pairs[0].right)));
+				this->rightPrimer.setMeltingTemperature(p3retVal->best_pairs.pairs[0].right->temp);
+				this->rightPrimer.setGcPercent(p3retVal->best_pairs.pairs[0].right->gc_content);
+				this->rightPrimer.setStartIndex(p3retVal->best_pairs.pairs[0].right->start);
+				this->rightPrimer.setLength((int)p3retVal->best_pairs.pairs[0].right->length);
+				this->rightPrimer.setAnyTh(p3retVal->best_pairs.pairs[0].right->self_any);
+				this->rightPrimer.setThreeTh(p3retVal->best_pairs.pairs[0].right->self_end);
+				this->rightPrimer.setHairpin(p3retVal->best_pairs.pairs[0].right->hairpin_th);
+
+			}
+			else {
+				this->setGlobalError("No primers were returned.");
+			}
 		}
 		else {
 			//There was some error.
@@ -159,7 +188,7 @@ PrimerOutput::PrimerOutput(SequenceRegionOutput &seqOut, const  p3retval *p3retV
 		}
 	}
 	else {
-		this->setGlobalError("Result was NULL!!!");
+		this->setGlobalError("Result was NULL!");
 	}
 }
 
@@ -243,34 +272,63 @@ void PrimerOutput::setWarning(std::string warning) {
 	this->warning = warning;
 }
 
+std::string PrimerOutput::getSettingsFile() const {
+	return settingsFile;
+}
+
+void PrimerOutput::setSettingsFile(std::string settingsFile) {
+	this->settingsFile = settingsFile;
+}
+
+//=============================================================================================================
+//Primer3Settings class methods.
+
+
 Primer3Settings::Primer3Settings(std::string settingsFile,
-									p3_global_settings *globalSettings, seq_args *seqSettings) {
+									p3_global_settings *globalSettings,
+									seq_args *seqSettings, string thermoSettingsLoc) {
 
 	this->settingsFile = settingsFile;
 	this->globalSetting = globalSetting;
 	this->sequenceSetting = seqSettings;
+	this->thermoSettingsLoc = thermoSettingsLoc;
 }
 
+Primer3Settings::~Primer3Settings() {
+
+	//Delete the global and sequence settings
+	if(globalSetting != NULL) {
+
+		if (globalSetting->thermodynamic_alignment == 1) {
+				destroy_thal_structures();
+		}
+
+		p3_destroy_global_settings(globalSetting);
+		globalSetting = NULL;
+	}
+
+	if(sequenceSetting != NULL) {
+		destroy_seq_args(sequenceSetting);
+		sequenceSetting = NULL;
+	}
+}
+
+//=============================================================================================================
+//Primer3Wrapper class methods.
+
 Primer3Wrapper::Primer3Wrapper() {
-	// TODO Auto-generated constructor stub
 
 }
 
 Primer3Wrapper::~Primer3Wrapper() {
-	// TODO Auto-generated destructor stub
+
 }
 
-bool Primer3Wrapper::fillInParameters(Primer3Settings &primerSettings) {
-
-	//TODO: We do not need to read the settings file everytime.
-	//Optimization required to read it just once.
-
-	cout << "Reading settings file" << endl;
+bool Primer3Wrapper::fillPrimerParameters(Primer3Settings &primerSettings) {
 
 	bool retVal = false;
 
 	string settingsFile = primerSettings.settingsFile;
-	int io_version = 4;
 	int dump_args = 0;
 
 	read_boulder_record_results read_boulder_record_res = {0,0};
@@ -288,26 +346,31 @@ bool Primer3Wrapper::fillInParameters(Primer3Settings &primerSettings) {
 	primerSettings.globalSetting = p3_create_global_settings();
 
 	if (!primerSettings.globalSetting) {
-		cout << "Global settings not created" << endl;
+		cerr << "Global settings not created" << endl;
+		destroy_pr_append_str_data(&nonfatal_parse_err);
+		destroy_pr_append_str_data(&fatal_parse_err);
+		destroy_pr_append_str_data(&warnings);
 		return retVal;
 	}
 
 	primerSettings.globalSetting->dump = dump_args ;
 
-	/* Settings files have to be read in just below, and
-	 the functions need a temporary sarg */
+	//Create the sequence settings struct.
 	if (!(primerSettings.sequenceSetting = create_seq_arg())) {
+
+		cerr << "Sequence settings not created" << endl;
 		p3_destroy_global_settings(primerSettings.globalSetting);
-		cout << "Global settings not created" << endl;
+		destroy_seq_args(primerSettings.sequenceSetting);
+		destroy_pr_append_str_data(&nonfatal_parse_err);
+		destroy_pr_append_str_data(&fatal_parse_err);
+		destroy_pr_append_str_data(&warnings);
 		return retVal;
 	}
 
+	//The path to the external settings file.
 	pr_append_external(&p3_settings_path, settingsFile.c_str());
-//	cout << seqRegOutput.getSeqRegInput().toString() << "=" << seqRegOutput.getCompleteSequence() << endl;
-//	cout << "Settings: " << p3_settings_path.data << " + " << p3_settings_path.storage_size << endl;
 
-	/* Read data from the settings file until a "=" line occurs.  Assign
-	     parameter values for primer picking to pa and sa. */
+	//Read data from the file which is in boulder io fromat.
 	if (!pr_is_empty(&p3_settings_path)) {
 		read_p3_file(pr_append_str_chars(&p3_settings_path),
 			 settings,
@@ -316,148 +379,270 @@ bool Primer3Wrapper::fillInParameters(Primer3Settings &primerSettings) {
 		destroy_pr_append_str_data(&p3_settings_path);
 
 	if (primerSettings.globalSetting->thermodynamic_alignment == 1)
-		read_thermodynamic_parameters();
+		this->fillThermoPrimerParameters(primerSettings.thermoSettingsLoc);
 	}
 
-	//Make custom parameters adjustment to the global settings
+	//Make custom parameters adjustment to the global settings.
 	primerSettings.globalSetting->num_return = 1;
 
 	if (fatal_parse_err.data != NULL) {
-
-		cout << "Fatal error" << endl;
-		  /* To avoid being distracted when looking for leaks: */
-		  if (primerSettings.globalSetting->thermodynamic_alignment == 1)
-		    destroy_thal_structures();
-		  p3_destroy_global_settings(primerSettings.globalSetting);
-		  primerSettings.globalSetting = NULL;
-		  destroy_seq_args(primerSettings.sequenceSetting);
-		  destroy_pr_append_str_data(&nonfatal_parse_err);
-		  destroy_pr_append_str_data(&fatal_parse_err);
-		  destroy_pr_append_str_data(&warnings);
-		  destroy_dpal_thal_arg_holder();
+		cerr << "Fatal error" << endl;
 	}
 	else {
 		retVal = true;
 	}
 
+	destroy_pr_append_str_data(&nonfatal_parse_err);
+	destroy_pr_append_str_data(&fatal_parse_err);
+	destroy_pr_append_str_data(&warnings);
+
 	return retVal;
 }
 
-vector<PrimerOutput> Primer3Wrapper::createPrimers(vector<string> settingsFiles, vector<SequenceRegionOutput> seqRegOuts) {
+bool Primer3Wrapper::fillThermoPrimerParameters(std::string themoSettingsPath) {
+
+	bool retVal = false;
+
+	thal_results thalRes;
+	//if the path to the parameter files did not change, we don't need to read again
+	if (thermodynamic_path_changed == 0)
+		return retVal;
+	//check that the path to the parameters folder was provided
+	if (themoSettingsPath.empty()) {
+		cerr << "Thermodynamic Alignment specified but path is empty. " <<
+				" No thermodynamic parameters are going to be used." << endl;
+		return retVal;
+	}
+	else {
+		/* read in the thermodynamic parameters */
+		if (get_thermodynamic_values(themoSettingsPath.c_str(), &thalRes)) {
+			cerr << thalRes.msg << endl;
+			return retVal;
+		}
+
+		retVal = true;
+		// mark that the last given path was used for reading the parameters
+		thermodynamic_path_changed = 0;
+	}
+
+	return retVal;
+}
+
+vector<PrimerOutput> Primer3Wrapper::createPrimers(vector<string> settingsFiles,
+										map<string, SequenceRegionOutput> seqRegOuts) {
 
 	vector<PrimerOutput> primerOuts;
 
-	string firstSettingsFile = settingsFiles.front();
-	PrimerOutput primerOut;
-
-	p3_global_settings *global_pa;
-	seq_args *sarg;
-
-	Primer3Settings primerSettings = Primer3Settings(firstSettingsFile, global_pa, NULL);
-	this->fillInParameters(primerSettings);
-
-	for(vector<SequenceRegionOutput>::const_iterator iterator=seqRegOuts.begin();
+	//Iterate over all the region inputs
+	for(map<string, SequenceRegionOutput>::const_iterator iterator=seqRegOuts.begin();
 						iterator!=seqRegOuts.end(); ++iterator) {
 
-		SequenceRegionOutput seqOut = *iterator;
 
-		cout << "Before primer out" << endl;
-		primerSettings.sequenceSetting = create_seq_arg();
-		p3retval retVal = createPrimers(primerSettings, seqOut);
-		cout << "After primer out" << endl;
-		primerOut = PrimerOutput(seqOut, &retVal, primerSettings.sequenceSetting);
-		cout << "After primer out" << endl;
-		destroy_seq_args(primerSettings.sequenceSetting);
-		cout << "After primer out" << endl;
+		SequenceRegionOutput seqOut = (*iterator).second;
+		PrimerOutput primerOut = createPrimers(settingsFiles, seqOut);
+
 		primerOuts.push_back(primerOut);
 	}
 
 	return primerOuts;
 }
 
+bool Primer3Wrapper::createPrimers(vector<string> settingsFiles,
+									map<string, SequenceRegionOutput> seqRegOuts, string outputFileLoc) {
 
-p3retval Primer3Wrapper::createPrimers(Primer3Settings &primerSettings,
+	bool retVal = false;
+
+	string medseqFileName = outputFileLoc + "." + PRIMER_COMPOSITE_FILE_EXTENSION;
+	string primerFileName = outputFileLoc + "." + PRIMER_TERSE_FILE_EXTENSION;
+
+	//Create the two file and write into them. If the file already exists
+	//truncate the contents.
+	ofstream medseqFile, primersFile;
+	medseqFile.open(medseqFileName.c_str(), ios::out | ios::trunc);
+	primersFile.open(primerFileName.c_str(), ios::out | ios::trunc);
+
+	if(medseqFile.is_open() && primersFile.is_open()) {
+		//Iterate over all the region inputs
+		for(map<string, SequenceRegionOutput>::const_iterator iterator=seqRegOuts.begin();
+							iterator!=seqRegOuts.end(); ++iterator) {
+
+			SequenceRegionOutput seqOut = (*iterator).second;
+			PrimerOutput primerOut = createPrimers(settingsFiles, seqOut);
+
+			medseqFile << printPrimer(primerOut);
+			primersFile << printPrimer(primerOut, true);
+
+			retVal = true;
+		}
+		medseqFile.close();
+		primersFile.close();
+	}
+
+	return retVal;
+}
+
+PrimerOutput Primer3Wrapper::createPrimers(vector<string> settingsFiles, SequenceRegionOutput &seqRegOut) {
+
+	PrimerOutput primerOut;
+
+	//Iterate through the list of settings files in order.
+	for(vector<string>::const_iterator settingsIterator=settingsFiles.begin();
+			settingsIterator!=settingsFiles.end(); ++settingsIterator) {
+
+		primerOut = createPrimers(*settingsIterator, seqRegOut);
+
+		//If there were no error's then just break out of the inner loop
+		if(primerOut.getGlobalError().empty()) {
+			break;
+		}
+	}
+
+	return primerOut;
+}
+
+PrimerOutput Primer3Wrapper::createPrimers(string settingsFile, SequenceRegionOutput &seqRegOut) {
+
+	PrimerOutput primerOut;
+	p3_global_settings *global_pa = NULL;
+
+	//TODO: We do not need to read the settings file everytime.
+	//Optimization required to read it just once.
+	//We could just keep a list of all the primer settings and pass them
+	//around each time rather than filling the parmeter each time
+
+	Primer3Settings primerSettings = Primer3Settings(settingsFile, global_pa, NULL, PRIMER_THERMO_CONFIG_DEFAULT);
+
+	//Make sure that the path change param is set to 1 now,
+	//because we would need to readjust this for each primer.
+	thermodynamic_path_changed = 1;
+	this->fillPrimerParameters(primerSettings);
+
+	primerSettings.sequenceSetting = create_seq_arg();
+	p3retval *retVal = createPrimers(primerSettings, seqRegOut);
+	primerOut = PrimerOutput(seqRegOut, retVal, primerSettings.sequenceSetting, primerSettings.settingsFile);
+
+	//Memory deallocation
+	destroy_p3retval(retVal);
+
+	return primerOut;
+}
+
+
+p3retval* Primer3Wrapper::createPrimers(Primer3Settings &primerSettings,
 										SequenceRegionOutput &seqRegOutput) {
 
 	/* Retval will point to the return value from choose_primers(). */
 	p3retval *retval = NULL;
 
+	//Set the sequence and target inforamtion.
 	p3_set_sa_sequence(primerSettings.sequenceSetting, seqRegOutput.getCompleteSequence().c_str());
 	p3_add_to_sa_tar2(primerSettings.sequenceSetting, (int)seqRegOutput.getPrevSequence().length(), (int)seqRegOutput.getTargetSequence().length());
 
+	p3_set_gs_primer_file_flag(primerSettings.globalSetting, 0);
     retval = choose_primers(primerSettings.globalSetting, primerSettings.sequenceSetting);
     if (NULL == retval) {
     	//Let us return a NULL, it is upto the calling method to handle it.
-    	return *retval;
+    	return retval;
     }
 
-	print_boulder(4, primerSettings.globalSetting, primerSettings.sequenceSetting, retval, 0);
+	//print_boulder(4, primerSettings.globalSetting, primerSettings.sequenceSetting, retval, 0);
 
-	return *retval;
-
-}
-
-/* Reads the thermodynamic parameters if the thermodynamic alignment
-   tag was set to 1 */
-static void
-read_thermodynamic_parameters() {
-
-	//TODO: Implement this method.
+	return retval;
 
 }
 
 std::string Primer3Wrapper::outputPrintRegion(SequenceRegionInput region, bool isLeftPrimer) {
 
-	std::stringstream temp1, temp2;
-	temp1 << Utility::digitFromString(region.getRegionName());
-	string regionPrintStr = temp1.str();
-	if(regionPrintStr.empty() || regionPrintStr == "0") {
-		regionPrintStr = region.getRegionName();
-	}
-	temp2 << region.getStartIndex();
-	string startIndexStr = temp2.str();
-	string primerDirection = isLeftPrimer?"F":"R";
-	return string(regionPrintStr + "-" + startIndexStr  + primerDirection + "=");
+	string chromosomeToMatch = "chr";
 
+	string regionPrintStr = region.getRegionName();
+	size_t pos = regionPrintStr.find(chromosomeToMatch);
+	if(pos != string::npos) {
+		regionPrintStr = regionPrintStr.substr(pos + chromosomeToMatch.length());
+	}
+
+	stringstream temp;
+	temp << region.getStartIndex();
+	string startIndexStr = temp.str();
+	string primerDirection = isLeftPrimer?"F":"R";
+	return string(regionPrintStr + "-" + startIndexStr  + primerDirection);
 }
 
 void Primer3Wrapper::printPrimer(vector<PrimerOutput> primerOuts) {
 
 	for(vector<PrimerOutput>::const_iterator iterator=primerOuts.begin();
 		iterator!=primerOuts.end(); ++iterator) {
-		//cout << "For: " << iterator << endl;
-		PrimerOutput pOut = *iterator;
-
-		cout << pOut.getSeqOutput().getSeqRegInput().toString() << "=" <<
-							pOut.getSeqOutput().getCompleteSequence() << endl;
-
-		if(!pOut.getGlobalError().empty()) {
-			cout << "ERROR: " << pOut.getGlobalError() << endl;
-		}
-		else if(!pOut.getSequenceError().empty()) {
-			cout << "ERROR: " << pOut.getSequenceError() << endl;
-		}
-		else {
-
-			if(!pOut.getWarning().empty()) {
-				cout << "WARNING: " << pOut.getWarning() << endl;
-			}
-
-			cout << "Target:[" << pOut.getSeqOutput().getPrevSequence().length() << "," <<
-					pOut.getSeqOutput().getTargetSequence().length() << "]" << endl <<
-					this->outputPrintRegion(pOut.getSeqOutput().getSeqRegInput(), true) <<
-					pOut.getLeftPrimer().getSequence() <<
-					"| Start: " << pOut.getLeftPrimer().getStartIndex()  + 1 << " "
-					"| Length: " << pOut.getLeftPrimer().getLength() << " "
-					"| Temperature: " << pOut.getLeftPrimer().getMeltingTemperature() << " "
-					"| GC%: " << pOut.getLeftPrimer().getGcPercent() << endl <<
-					this->outputPrintRegion(pOut.getSeqOutput().getSeqRegInput(), false) <<
-					pOut.getRightPrimer().getSequence() <<
-					"| Start: " << pOut.getRightPrimer().getStartIndex() + 1 << " "
-					"| Length: " << pOut.getRightPrimer().getLength() << " "
-					"| Temperature: " << pOut.getRightPrimer().getMeltingTemperature() << " "
-					"| GC%: " << pOut.getRightPrimer().getGcPercent() << endl <<
-					"Overall Product size: " << pOut.getProductSize() << endl << endl;
-		}
+		cout << printPrimer((PrimerOutput)(*iterator));
 	}
 }
+
+string Primer3Wrapper::printPrimer(PrimerOutput primerOut, bool isTerse/*=false*/) {
+
+	stringstream retVal("");
+
+	if(!isTerse) {
+		retVal << ">" << primerOut.getSeqOutput().getSeqRegInput().toString() << endl <<
+								primerOut.getSeqOutput().getCompleteSequence(true) << endl;
+
+			if(!primerOut.getGlobalError().empty()) {
+				retVal << "ERROR: " << primerOut.getGlobalError() << endl << endl;
+			}
+			else if(!primerOut.getSequenceError().empty()) {
+				retVal << "ERROR: " << primerOut.getSequenceError() << endl << endl;
+			}
+			else {
+
+				if(!primerOut.getWarning().empty()) {
+					retVal << "WARNING: " << primerOut.getWarning() << endl;
+				}
+
+				retVal << "Target: [" << primerOut.getSeqOutput().getPrevSequence().length() << "," <<
+						primerOut.getSeqOutput().getTargetSequence().length() << "]" << endl <<
+						"Settings file : " << primerOut.getSettingsFile() << endl <<
+						this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), true) << "=" <<
+						primerOut.getLeftPrimer().getSequence() <<
+						"| Start: " << primerOut.getLeftPrimer().getStartIndex()  + 1 << " " <<
+						"| Length: " << primerOut.getLeftPrimer().getLength() << " " <<
+						"| Temperature: " << (int)primerOut.getLeftPrimer().getMeltingTemperature() << " " <<
+						"| GC%: " << primerOut.getLeftPrimer().getGcPercent() << endl <<
+						this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), false) << "=" <<
+						primerOut.getRightPrimer().getSequence() <<
+						"| Start: " << primerOut.getRightPrimer().getStartIndex() + 1 << " " <<
+						"| Length: " << primerOut.getRightPrimer().getLength() << " " <<
+						"| Temperature: " << (int)primerOut.getRightPrimer().getMeltingTemperature() << " " <<
+						"| GC%: " << primerOut.getRightPrimer().getGcPercent() << endl <<
+						"Overall Product size: " << primerOut.getProductSize() << endl << endl;
+			}
+	}
+	else {
+
+		if(!primerOut.getGlobalError().empty()) {
+			retVal << this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), true) << ", " <<
+								  "ERROR: " << primerOut.getGlobalError() << endl <<
+								  this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), false) << ", " <<
+								  "ERROR: " << primerOut.getGlobalError() << endl;
+		}
+		else if(!primerOut.getSequenceError().empty()) {
+			retVal << this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), true) << ", " <<
+					  "ERROR: " << primerOut.getSequenceError() << endl <<
+					  this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), false) << ", " <<
+					  "ERROR: " <<	primerOut.getSequenceError() << endl;
+		}
+		else {
+			if(!primerOut.getWarning().empty()) {
+				retVal << "WARNING: " << primerOut.getWarning() << endl;
+			}
+
+			retVal << this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), true) << ", " <<
+					primerOut.getLeftPrimer().getSequence() << endl <<
+					this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), false) << ", " <<
+					primerOut.getRightPrimer().getSequence() << endl;
+		}
+
+	}
+
+
+	return retVal.str();
+}
+//=============================================================================================================
+
