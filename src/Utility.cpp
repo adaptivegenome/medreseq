@@ -16,6 +16,9 @@
 #include <regex.h>
 #include <fstream>
 #include <vector>
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
 
 #include "Utility.h"
 
@@ -79,7 +82,7 @@ vector<string> Utility::split(std::string text, std::string delimiter) {
 	 std::vector<std::string> retVal;
 
 	 //We need to extract the required parameters.
-	 char* textCharPtr = new char[text.length()];
+	 char* textCharPtr = new char[text.length() + 1];
 	 std::strcpy(textCharPtr, text.c_str());
 	 char* textIterator = NULL;
 	 textIterator = std::strtok(textCharPtr, delimiter.c_str());
@@ -91,7 +94,7 @@ vector<string> Utility::split(std::string text, std::string delimiter) {
 		 textIterator = std::strtok(NULL, delimiter.c_str());
 	}
 
-	delete textCharPtr;
+	delete[] textCharPtr;
 
 	return retVal;
 }

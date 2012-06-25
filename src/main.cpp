@@ -27,7 +27,7 @@
 
 using namespace std;
 
-const static string USAGE_STR = "Usage is ./MedReseq fasta-file sequence/sequence-file";
+const static string USAGE_STR = "Usage is ./MedReseq fasta-file sequence/sequence-file/vcf-file";
 const static string MAIN_CONFIG_FILE = "essentials/medreseq.config";
 const static string OUTPUT_FILE_NAME_DEFAULT = "output";
 
@@ -46,15 +46,15 @@ int main(int argc, char **argv) {
 	//Parameter which indicates if the second command line argument is a file or sequence
 	bool cmdParamIsFile = true;
 
-	//Command line params
-	string fastaFile = argv[1];
-	string regionsInput = argv[2];
-
 	//Validate the command line arguments.
 	if(argc != 3) {
 		cerr <<  USAGE_STR << endl;
 		return EXIT_FAILURE;
 	}
+
+	//Command line params
+	string fastaFile = argv[1];
+	string regionsInput = argv[2];
 
 	//Check if the fasta file exists.
 	if(Utility::fileExists(fastaFile)) {

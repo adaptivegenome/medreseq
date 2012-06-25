@@ -137,33 +137,32 @@ PrimerOutput::PrimerOutput(SequenceRegionOutput &seqOut, const  p3retval *p3retV
 				this->pairThreeThCompl = p3retVal->best_pairs.pairs[0].compl_end;
 				this->pairTemplateMisprimingTh = p3retVal->best_pairs.pairs[0].template_mispriming;
 
-				 // Pointers for the primer set just printing
-				 primer_rec *fwd, *rev, *intl;
+				// Pointers for the primer set just printing
+				primer_rec *fwd, *rev;
 
-				 fwd  = p3retVal->best_pairs.pairs[0].left;
-				 rev  = p3retVal->best_pairs.pairs[0].right;
-				 intl = p3retVal->best_pairs.pairs[0].intl;
+				fwd  = p3retVal->best_pairs.pairs[0].left;
+				rev  = p3retVal->best_pairs.pairs[0].right;
 
 				//Values for the left primer.
-				this->leftPrimer.setSequence(string(pr_oligo_sequence(sargs, p3retVal->best_pairs.pairs[0].left)));
-				this->leftPrimer.setMeltingTemperature(p3retVal->best_pairs.pairs[0].left->temp);
-				this->leftPrimer.setGcPercent(p3retVal->best_pairs.pairs[0].left->gc_content);
-				this->leftPrimer.setStartIndex(p3retVal->best_pairs.pairs[0].left->start);
-				this->leftPrimer.setLength((int)p3retVal->best_pairs.pairs[0].left->length);
-				this->leftPrimer.setAnyTh(p3retVal->best_pairs.pairs[0].left->self_any);
-				this->leftPrimer.setThreeTh(p3retVal->best_pairs.pairs[0].left->self_end);
-				this->leftPrimer.setHairpin(p3retVal->best_pairs.pairs[0].left->hairpin_th);
+				this->leftPrimer.setSequence(string(pr_oligo_sequence(sargs, fwd)));
+				this->leftPrimer.setMeltingTemperature(fwd->temp);
+				this->leftPrimer.setGcPercent(fwd->gc_content);
+				this->leftPrimer.setStartIndex(fwd->start);
+				this->leftPrimer.setLength((int)fwd->length);
+				this->leftPrimer.setAnyTh(fwd->self_any);
+				this->leftPrimer.setThreeTh(fwd->self_end);
+				this->leftPrimer.setHairpin(fwd->hairpin_th);
 
 				//Values for the right primer
 				//Values for the left primer.
-				this->rightPrimer.setSequence(string(pr_oligo_rev_c_sequence(sargs, p3retVal->best_pairs.pairs[0].right)));
-				this->rightPrimer.setMeltingTemperature(p3retVal->best_pairs.pairs[0].right->temp);
-				this->rightPrimer.setGcPercent(p3retVal->best_pairs.pairs[0].right->gc_content);
-				this->rightPrimer.setStartIndex(p3retVal->best_pairs.pairs[0].right->start);
-				this->rightPrimer.setLength((int)p3retVal->best_pairs.pairs[0].right->length);
-				this->rightPrimer.setAnyTh(p3retVal->best_pairs.pairs[0].right->self_any);
-				this->rightPrimer.setThreeTh(p3retVal->best_pairs.pairs[0].right->self_end);
-				this->rightPrimer.setHairpin(p3retVal->best_pairs.pairs[0].right->hairpin_th);
+				this->rightPrimer.setSequence(string(pr_oligo_rev_c_sequence(sargs, rev)));
+				this->rightPrimer.setMeltingTemperature(rev->temp);
+				this->rightPrimer.setGcPercent(rev->gc_content);
+				this->rightPrimer.setStartIndex(rev->start);
+				this->rightPrimer.setLength((int)rev->length);
+				this->rightPrimer.setAnyTh(rev->self_any);
+				this->rightPrimer.setThreeTh(rev->self_end);
+				this->rightPrimer.setHairpin(rev->hairpin_th);
 
 			}
 			else {

@@ -18,6 +18,7 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <cstring>
 
 #include "ConfigurationLoader.h"
 #include "SamtoolsWrapper.h"

@@ -18,7 +18,7 @@ all: MedReseq
 #define constants
 CPP        = g++
 O_OPTS     = -O3
-CC_OPTS    = -c -g -D__USE_FIXED_PROTOTYPES__ -Wall
+CC_OPTS    = -c -g -Wall
 INCLUDES   = -Isamtools -Iprimer3/src
 LIBS	   = -Lprimer3/src -Lsamtools -lbam -lprimer3 -ldpal -loligotm -lthal -lboulder -lz -lm
 
@@ -52,4 +52,4 @@ config.o:
 	$(CPP) $(CFLAGS) $(INCLUDES) $ src/ConfigurationLoader.cpp -o $@
 	
 clean:
-	rm *.o
+	rm *.o $(NAME)

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <cstdlib>
 
 #include "SequenceRegions.h"
 #include "Utility.h"

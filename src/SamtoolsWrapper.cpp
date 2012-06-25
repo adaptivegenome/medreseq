@@ -17,7 +17,7 @@
 #include <fstream>
 
 #include "SamtoolsWrapper.h"
-#include "Sam.h"
+#include "sam.h"
 #include "SequenceRegions.h"
 #include "Utility.h"
 #include "VCFAdapter.h"

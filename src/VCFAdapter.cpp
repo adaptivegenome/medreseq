@@ -17,10 +17,12 @@
 #include <ostream>
 #include <iostream>
 #include <vector>
+#include <cstdlib>
 
 #include "VCFAdapter.h"
 #include "Utility.h"
 #include "SequenceRegions.h"
+#include "SamtoolsWrapper.h"
 
 
 using namespace std;
@@ -127,7 +129,11 @@ vector<string> VCFAdapter::extractRegions(string vcfFileLoc) {
 
 				//Now extract the information for each line and add it to the vector
 				string regionStr = extractRegion(line);
-				regionsVector.push_back(regionStr);
+
+				if(Utility::regexMatch(regionStr.c_str(), SamtoolsWrapper::REGION_INPUT_PATTERN.c_str())) {
+					regionsVector.push_back(regionStr);
+					//cout << line << endl << regionStr << endl << endl;
+				}
 			}
 		}
 		vcfFile.close();
@@ -161,9 +167,12 @@ bool VCFAdapter::extractRegionsToFile(string vcfFileLoc, string regionsFileLoc) 
 
 				//Now extract the information for each line.
 				string regionStr = extractRegion(line);
-				regionOutFile << regionStr << endl;
 
-				retVal = true;
+				if(Utility::regexMatch(regionStr.c_str(), SamtoolsWrapper::REGION_INPUT_PATTERN.c_str())) {
+					regionOutFile << regionStr << endl;
+					//cout << line << endl << regionStr << endl << endl;
+					retVal = true;
+				}
 			}
 		}
 		vcfFile.close();
