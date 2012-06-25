@@ -1,0 +1,42 @@
+****************************
+Medical Resequencing README
+****************************
+
+For valdition studies where we test new approaches to finding mutations in high-throughput sequencing data, we want to confirm our identified mutations are real. Also for genotyping assays for medical projects it is often important to confirm the existence of mutations. For this reason, we have a software package that allows us to specify genomic regions we want to sequence. The software designs primers and provides a reference sequence from which we can compare data to.
+
+--------------------------------------------------------------------------------
+Getting started
+--------------------------------------------------------------------------------
+
+Download the source and compile the projects involved using make.
+
+The you can run the binary created using command:
+./MedReseq fasta-file sequence/sequence-file/vcf-file
+
+Soon we will provide a binary distribution and support developer docs.
+
+--------------------------------------------------------------------------------
+Contributing
+--------------------------------------------------------------------------------
+
+Bug fixes, documentation, and code contributions are welcome. Please feel free to email the author, or contact us via the github page:
+
+https://github.com/adaptivegenome/medreseq (project source)
+
+--------------------------------------------------------------------------------
+License
+--------------------------------------------------------------------------------
+
+MedReseq is licensed under the Virginia Tech Non-Commercial Purpose License. The license statement is provided in the License.txt in
+the project root folder.
+
+MedReseq uses Samtools, which is licensed under the GPLv2 license. A copy of this license is provided under samtools/License.txt
+MedReseq uses Primer3, which is licensed under the MIT license. A copy of this license is provided under primer3/License.txt
+
+
+--------------------------------------------------------------------------------
+Contact
+--------------------------------------------------------------------------------
+David Mittelman (Project lead)     david.mittelman@vt.edu
+Sunil Kamalakar (Lead developer)   sunilk@vt.edu
+Virginia Bioinformatics Institute
