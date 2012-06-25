@@ -1,3 +1,8 @@
+MedReseq is licensed under the Virginia Tech Non-Commercial Purpose License. The license statement is provided below.
+
+MedReseq uses Samtools, which is licensed under the GPLv2 license. A copy of this license is provided under samtools/License.txt
+MedReseq uses Primer3, which is licensed under the MIT license. A copy of this license is provided under primer3/License.txt
+
 Non-Commercial Purpose License
 
 Virginia Polytechnic Institute and State University (Virginia Tech) owns the Open Genomics Engine (OpenGE) software and its associated documentation (“Software”).  You should carefully read the following terms and conditions before using this software.  Your use of this Software indicates your acceptance of this license agreement and all terms and conditions. 
