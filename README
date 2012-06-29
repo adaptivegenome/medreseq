@@ -2,7 +2,7 @@
 Medical Resequencing README
 ****************************
 
-It is often useful to validate mutations found using high-throughput resequencing data with Sanger-based sequencing. This utility accepts a genomic region or list of genomic regions or a VCF file as input, and then uses Primer3 to return primers that can be used to amplify and sequence the regions of interest. Also reported is the reference sequence along with other details to aid validation studies. The software should run on all platforms but has only been tested using Ubuntu and MacOS Lion.
+Sanger sequencing can be useful for validating mutations found using high-throughput resequencing data. This utility accepts a genomic region or list of genomic regions or a VCF file as input, and then uses Primer3 to return primers that can be used to amplify and sequence the regions of interest. Also reported is the reference sequence along with other details to aid validation studies. The software should run on all platforms but has only been tested using Ubuntu and MacOS Lion.
 
 --------------------------------------------------------------------------------
 Getting started
