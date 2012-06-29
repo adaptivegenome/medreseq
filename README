@@ -1,0 +1,62 @@
+****************************
+Medical Resequencing README
+****************************
+
+It is often useful to validate mutations found using high-throughput resequencing data with Sanger-based sequencing. This utility accepts a genomic region or list of genomic regions or a VCF file as input, and then uses Primer3 to return primers that can be used to amplify and sequence the regions of interest. Also reported is the reference sequence along with other details to aid validation studies. The software should run on all platforms but has only been tested using Ubuntu and MacOS Lion.
+
+--------------------------------------------------------------------------------
+Getting started
+--------------------------------------------------------------------------------
+
+We have provided the binaries for Mac-OSX 64-bit and Linux 64-bit(tested on Ubuntu 11).
+The binary takes the necessary files from the essentials folder which contains the medreseq.config file which specifies configurations for the project. We also provide what we believe is a good mix of settings files, which are carefully designed for generating primers based on a tiering system. You can edit these settings files located in the essentials folder as you like.
+
+<<<<<<< HEAD
+Running the command:
+./MedReseq fasta-file sequence/sequence-file/vcf-file
+
+If the run was successful, it produces two types of files:
+1. output.medreseq which contains a comprehensive result for each region.
+2. tier1.primers, tier2.primers, tier3.primers, no-output.primers based on the tiered primers settings files specified in the medreseq.config file.
+3. You are ready to order the primers using the *.primers files.
+
+NOTE: 
+If the fasta file is not indexed, it would take a considerable time to produce the output.
+
+Building from source:
+
+1.Download the git project using command: git clone https://github.com/adaptivegenome/medreseq
+2. We need to build primer3 library: cd primer3/src, then make clean && make.
+3. We need to build samtools library, cd samtools; make clean && make.
+4. Go to project root folder and run: make. This should generate the Medreseq binary.
+=======
+Then you can run the binary created using command:
+./MedReseq fasta-file sequence/sequence-file/vcf-file
+
+Soon we will provide a binary distribution along with supporting documentation.
+>>>>>>> 1f2d6e5832be55f32f32aed8c8d6b4c9c4a2bc38
+
+--------------------------------------------------------------------------------
+Contributing
+--------------------------------------------------------------------------------
+
+Bug fixes, documentation, and code contributions are welcome. Please feel free to email the author, or contact us via the github page:
+
+https://github.com/adaptivegenome/medreseq (project source)
+https://github.com/adaptivegenome/medreseq/issues (suggestions, comments, bugs, etc.)
+
+--------------------------------------------------------------------------------
+License
+--------------------------------------------------------------------------------
+
+MedReseq is licensed under the Virginia Tech Non-Commercial Purpose License. The license statement is provided in the License.txt in
+the project root folder.
+
+MedReseq uses Samtools, which is licensed under the GPLv2 license. A copy of this license is provided under samtools/License.txt
+MedReseq uses Primer3, which is licensed under the MIT license. A copy of this license is provided under primer3/License.txt
+
+--------------------------------------------------------------------------------
+Contact
+--------------------------------------------------------------------------------
+Sunil Kamalakar (Lead developer)   sunilk@vt.edu
+Mittelman Lab, Virginia Bioinformatics Institute
