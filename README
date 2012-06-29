@@ -11,7 +11,6 @@ Getting started
 We have provided the binaries for Mac-OSX 64-bit and Linux 64-bit(tested on Ubuntu 11).
 The binary takes the necessary files from the essentials folder which contains the medreseq.config file which specifies configurations for the project. We also provide what we believe is a good mix of settings files, which are carefully designed for generating primers based on a tiering system. You can edit these settings files located in the essentials folder as you like.
 
-<<<<<<< HEAD
 Running the command:
 ./MedReseq fasta-file sequence/sequence-file/vcf-file
 
@@ -29,12 +28,6 @@ Building from source:
 2. We need to build primer3 library: cd primer3/src, then make clean && make.
 3. We need to build samtools library, cd samtools; make clean && make.
 4. Go to project root folder and run: make. This should generate the Medreseq binary.
-=======
-Then you can run the binary created using command:
-./MedReseq fasta-file sequence/sequence-file/vcf-file
-
-Soon we will provide a binary distribution along with supporting documentation.
->>>>>>> 1f2d6e5832be55f32f32aed8c8d6b4c9c4a2bc38
 
 --------------------------------------------------------------------------------
 Contributing
