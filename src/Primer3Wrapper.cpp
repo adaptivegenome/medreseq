@@ -21,6 +21,7 @@
 #include "print_boulder.h"
 #include "SequenceRegions.h"
 #include "Utility.h"
+#include "ConfigurationLoader.h"
 
 #include <sstream>
 #include <fstream>
@@ -31,13 +32,14 @@
 
 using namespace std;
 
-//TODO: Do memory management for the C code, though the leak seems to grow very slowly.
+//TODO: Do memory management for the C code, though the leak seems to grow extremely slowly.
 
 //Assign the static members.
 const std::string Primer3Wrapper::PRIMER_COMPOSITE_FILE_EXTENSION = "medreseq";
 const std::string Primer3Wrapper::PRIMER_TERSE_FILE_EXTENSION = "primers";
-const std::string Primer3Wrapper::PRIMER_THERMO_CONFIG_DEFAULT = "primer3/src/primer3_config/";
+const std::string Primer3Wrapper::PRIMER_ERROR_FILE_NAME = "not-found";
 
+std::string Primer3Wrapper::PRIMER_THERMO_CONFIG_DEFAULT = ConfigurationLoader::THERMO_CONFIG_LOCATION_DEFAULT;
 
 //=============================================================================================================
 //SinglePrimer class methods.
@@ -451,30 +453,64 @@ bool Primer3Wrapper::createPrimers(vector<string> settingsFiles,
 
 	bool retVal = false;
 
+	//We need to create multiple files based on the settings files.
+	int numOfSettingFiles = settingsFiles.size();
+
+	//The names for the files and the file object itself.
+	string primerFileName[numOfSettingFiles + 1];
+	ofstream primersFile[numOfSettingFiles + 1]; //extra one for the errors
+	bool isWrittenToFile[numOfSettingFiles + 1];
+
 	string medseqFileName = outputFileLoc + "." + PRIMER_COMPOSITE_FILE_EXTENSION;
-	string primerFileName = outputFileLoc + "." + PRIMER_TERSE_FILE_EXTENSION;
-
-	//Create the two file and write into them. If the file already exists
-	//truncate the contents.
-	ofstream medseqFile, primersFile;
+	ofstream medseqFile;
 	medseqFile.open(medseqFileName.c_str(), ios::out | ios::trunc);
-	primersFile.open(primerFileName.c_str(), ios::out | ios::trunc);
 
-	if(medseqFile.is_open() && primersFile.is_open()) {
-		//Iterate over all the region inputs
-		for(map<string, SequenceRegionOutput>::const_iterator iterator=seqRegOuts.begin();
-							iterator!=seqRegOuts.end(); ++iterator) {
+	for (int i = 0; i < numOfSettingFiles; ++i) {
+		string extractedFileName = extractOutputFileName(string(settingsFiles[i]));
+		primerFileName[i] = extractedFileName + "." + PRIMER_TERSE_FILE_EXTENSION;
+		isWrittenToFile[i] = false;
+	}
+	primerFileName[numOfSettingFiles] = string(PRIMER_ERROR_FILE_NAME + "." + PRIMER_TERSE_FILE_EXTENSION);
+	isWrittenToFile[numOfSettingFiles] = false;
 
-			SequenceRegionOutput seqOut = (*iterator).second;
-			PrimerOutput primerOut = createPrimers(settingsFiles, seqOut);
+	//Iterate over all the region inputs
+	for(map<string, SequenceRegionOutput>::const_iterator iterator=seqRegOuts.begin();
+						iterator!=seqRegOuts.end(); ++iterator) {
+
+		SequenceRegionOutput seqOut = (*iterator).second;
+		PrimerOutput primerOut = createPrimers(settingsFiles, seqOut);
+
+		int fileIndex = getIndexOfFileToWrite(primerOut, settingsFiles);
+
+		if(fileIndex >= 0 && fileIndex <= numOfSettingFiles) {
+
+			//Lazy creation of file, only if needed.
+			if(!isWrittenToFile[fileIndex]) {
+				primersFile[fileIndex].open(primerFileName[fileIndex].c_str(), ios::out | ios::trunc);
+				isWrittenToFile[fileIndex] = true;
+			}
 
 			medseqFile << printPrimer(primerOut);
-			primersFile << printPrimer(primerOut, true);
+			primersFile[fileIndex] << printPrimer(primerOut, true);
 
 			retVal = true;
 		}
+	}
+
+	//Close all the open files.
+	if(medseqFile.is_open()) {
 		medseqFile.close();
-		primersFile.close();
+	}
+
+	for (int i = 0; i < numOfSettingFiles; ++i) {
+		if(primersFile[i].is_open()) {
+			primersFile[i].close();
+		}
+	}
+
+	//Also close the error file.
+	if(primersFile[numOfSettingFiles].is_open()) {
+		primersFile[numOfSettingFiles].close();
 	}
 
 	return retVal;
@@ -573,6 +609,43 @@ void Primer3Wrapper::printPrimer(vector<PrimerOutput> primerOuts) {
 		iterator!=primerOuts.end(); ++iterator) {
 		cout << printPrimer((PrimerOutput)(*iterator));
 	}
+}
+
+string Primer3Wrapper::extractOutputFileName(string fileName) {
+
+	string retVal("");
+
+	string exactFileName = fileName;
+	if(fileName.find(ConfigurationLoader::ESSENTIALS_FOLDER_NAME) != string::npos) {
+		exactFileName = Utility::split(fileName, ConfigurationLoader::FOLDER_DELIMITER)[1];
+	}
+
+	if(exactFileName.find(".") != string::npos) {
+		retVal = Utility::split(exactFileName, ".")[0];
+	}
+
+	return retVal;
+}
+
+int Primer3Wrapper::getIndexOfFileToWrite(PrimerOutput &primerOut, vector<string> &textVector) {
+
+	int retVal = -1;
+
+	if(primerOut.getGlobalError().empty() && primerOut.getSequenceError().empty()) {
+		string text = primerOut.getSettingsFile();
+		for (unsigned int i = 0; i < textVector.size() ; ++i) {
+			if(text == textVector[i]) {
+				retVal = i;
+				break;
+			}
+		}
+	}
+	else {
+		//There was an error, so we need to give the index to error file.
+		retVal = textVector.size();
+	}
+
+	return retVal;
 }
 
 string Primer3Wrapper::printPrimer(PrimerOutput primerOut, bool isTerse/*=false*/) {

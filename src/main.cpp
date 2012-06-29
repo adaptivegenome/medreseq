@@ -118,9 +118,9 @@ int main(int argc, char **argv) {
 	primer3Wrapper.createPrimers(settingsFiles, sequencesMap, OUTPUT_FILE_NAME_DEFAULT);
 
 	cout << "The comprehensive output file is: " <<
-				OUTPUT_FILE_NAME_DEFAULT  + "." + Primer3Wrapper::PRIMER_COMPOSITE_FILE_EXTENSION << endl;
-	cout << "The concise primers output file is: " <<
-					OUTPUT_FILE_NAME_DEFAULT  + "." + Primer3Wrapper::PRIMER_TERSE_FILE_EXTENSION << endl;
+				OUTPUT_FILE_NAME_DEFAULT  << "." << Primer3Wrapper::PRIMER_COMPOSITE_FILE_EXTENSION << endl;
+	cout << "The concise primers output files are: " <<
+					"*"  << "." << Primer3Wrapper::PRIMER_TERSE_FILE_EXTENSION << endl;
 
 	return EXIT_SUCCESS;
 }

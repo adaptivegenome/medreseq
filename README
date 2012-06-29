@@ -8,12 +8,26 @@ For valdition studies where we test new approaches to finding mutations in high-
 Getting started
 --------------------------------------------------------------------------------
 
-Download the source and compile the projects involved using make.
+We have provided the binaries for Mac-OSX 64-bit and Linux 64-bit(tested on Ubuntu 11).
+The binary takes the necessary files from the essentials folder which contains the medreseq.config file which specifies configurations for the project. We also provide what we believe is a good mix of settings files, which are carefully designed for generating primers based on a tiering system. You can edit these settings files located in the essentials folder as you like.
 
-The you can run the binary created using command:
+Running the command:
 ./MedReseq fasta-file sequence/sequence-file/vcf-file
 
-Soon we will provide a binary distribution and support developer docs.
+If the run was successful, it produces two types of files:
+1. output.medreseq which contains a comprehensive result for each region.
+2. tier1.primers, tier2.primers, tier3.primers, no-output.primers based on the tiered primers settings files specified in the medreseq.config file.
+3. You are ready to order the primers using the *.primers files.
+
+NOTE: 
+If the fasta file is not indexed, it would take a considerable time to produce the output.
+
+Building from source:
+
+1.Download the git project using command: git clone https://github.com/adaptivegenome/medreseq
+2. We need to build primer3 library: cd primer3/src, then make clean && make.
+3. We need to build samtools library, cd samtools; make clean && make.
+4. Go to project root folder and run: make. This should generate the Medreseq binary.
 
 --------------------------------------------------------------------------------
 Contributing

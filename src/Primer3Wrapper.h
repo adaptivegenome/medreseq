@@ -22,6 +22,7 @@
 #include "SamtoolsWrapper.h"
 #include "libprimer3.h"
 #include "SequenceRegions.h"
+#include "ConfigurationLoader.h"
 
 /*
  * This class represents the properties of a single primer.
@@ -184,8 +185,11 @@ public:
 	//The extension for the precise output for the primers.
 	const static std::string PRIMER_TERSE_FILE_EXTENSION;
 
+	//The name of error file for primers
+	const static std::string PRIMER_ERROR_FILE_NAME;
+
 	//The link to the primer3 config required to themodynamic allignment.
-	const static std::string PRIMER_THERMO_CONFIG_DEFAULT;
+	static std::string PRIMER_THERMO_CONFIG_DEFAULT;
 
 	//The default constructor and destructor
 	Primer3Wrapper();
@@ -260,6 +264,18 @@ protected:
 	 * to the primer settings which is going to be used for thermodynamic allignment.
 	 */
 	bool fillThermoPrimerParameters(std::string);
+
+	/**
+	 * This method provides the index of the array for which the string match took place.
+	 * Returns a -1 on failure.
+	 */
+	int getIndexOfFileToWrite(PrimerOutput &, std::vector<std::string> &);
+
+	/**
+	 * Provides the output name for the primers and medreseq files.
+	 * This is based on the settings file used.
+	 */
+	std::string extractOutputFileName(std::string);
 
 };
 

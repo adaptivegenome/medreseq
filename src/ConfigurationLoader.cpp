@@ -22,18 +22,26 @@
 
 #include "ConfigurationLoader.h"
 #include "SamtoolsWrapper.h"
+#include "Primer3Wrapper.h"
 #include "Utility.h"
 
 using namespace std;
 
+//The name of the folder containing files essential for medreseq.
+const std::string ConfigurationLoader::ESSENTIALS_FOLDER_NAME = "essentials";
+const std::string ConfigurationLoader::FOLDER_DELIMITER = "/";
+
 //The names of parameters in the config file.
 const std::string ConfigurationLoader::SEQUENCE_AROUND_LENGTH_NAME = "SEQUENCE_AROUND_LENGTH";
 const std::string ConfigurationLoader::SETTINGS_PREFERENCE_FILES_NAME = "SETTINGS_PREFERENCE_FILES";
+const std::string ConfigurationLoader::THERMO_CONFIG_LOCATION_NAME = "THERMO_CONFIG_LOCATION";
 
 //The default values for the configuration parameters
 const int ConfigurationLoader::SEQUENCE_AROUND_LENGTH_DEFAULT = 500;
-const std::string ConfigurationLoader::SETTINGS_PREFERENCE_FILE_DEFAULT = "primer3/primer3web_v3_0_0_default_settings.txt";
-
+const std::string ConfigurationLoader::SETTINGS_PREFERENCE_FILE_DEFAULT = ESSENTIALS_FOLDER_NAME + FOLDER_DELIMITER +
+																		  "tier1.settings";
+const std::string ConfigurationLoader::THERMO_CONFIG_LOCATION_DEFAULT = ESSENTIALS_FOLDER_NAME + FOLDER_DELIMITER +
+																		"primer3_config" + FOLDER_DELIMITER;
 
 //=============================================================================================================
 //Configuration holder class methods
@@ -77,6 +85,14 @@ void ConfigurationHolder::setSeqArndLength(int seqArndLength) {
 
 std::vector<std::string> ConfigurationHolder::getSettingsFiles() const {
 	return settingsFiles;
+}
+
+std::string ConfigurationHolder::getTermoConfigLoc() const {
+	return termoConfigLoc;
+}
+
+void ConfigurationHolder::setTermoConfigLoc(std::string termoConfigLoc) {
+	this->termoConfigLoc = termoConfigLoc;
 }
 
 void ConfigurationHolder::setSettingsFiles(
@@ -158,6 +174,15 @@ ConfigurationHolder ConfigurationLoader::obtainConfigurationSettings(std::string
 						configHolder.setSettingsFiles(settingsFiles);
 					}
 				}
+				else if(Utility::regexMatch(line.c_str(), THERMO_CONFIG_LOCATION_NAME.c_str())) {
+					std::string thermoConfigLoc = (Utility::split(line, "="))[1];
+					if(!thermoConfigLoc.empty()) {
+						configHolder.setTermoConfigLoc(thermoConfigLoc);
+					}
+					else {
+						configHolder.setTermoConfigLoc(THERMO_CONFIG_LOCATION_DEFAULT);
+					}
+				}
 			}
 		}
 		configFile.close();
@@ -168,7 +193,8 @@ ConfigurationHolder ConfigurationLoader::obtainConfigurationSettings(std::string
 
 void ConfigurationLoader::applyConfigurationSetting(ConfigurationHolder &configHolder) {
 
-	//SamtoolsWrapper::SEQUENCE_AROUND_LENGTH = configHolder.getSeqArndLength();
+	SamtoolsWrapper::SEQUENCE_AROUND_LENGTH = configHolder.getSeqArndLength();
+	Primer3Wrapper::PRIMER_THERMO_CONFIG_DEFAULT = configHolder.getTermoConfigLoc();
 }
 
 //=============================================================================================================

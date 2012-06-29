@@ -111,6 +111,8 @@ bool SamtoolsWrapper::validateRegionInput(SequenceRegionInput seqInput) {
 	int endIndex = seqInput.getEndIndex();
 
 	//Makes sure that we have the correct values for start and end indicies.
+	//TODO: What if the sequences start before the length of the sequence around length,
+	//in that case we do not create primers for those regions. Fix it if required.
 	if(startIndex > endIndex ||
 			startIndex < 0 || endIndex <= 0 ||
 			(startIndex - SEQUENCE_AROUND_LENGTH) < 0 ||

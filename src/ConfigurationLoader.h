@@ -34,6 +34,9 @@ private:
 	//The length of sequences that we choose on either side of the target sequence.
 	int seqArndLength;
 
+	//The parameter for thermodynamic setting in primer3
+	std::string termoConfigLoc;
+
 	//The list of settings files in the order of preference.
 	std::vector<std::string> settingsFiles;
 
@@ -52,6 +55,8 @@ public:
 	std::vector<std::string> getSettingsFiles() const;
 	void setSettingsFiles(std::vector<std::string> settingsFiles);
 
+	std::string getTermoConfigLoc() const;
+	void setTermoConfigLoc(std::string termoConfigLoc);
 };
 
 /**
@@ -61,13 +66,20 @@ public:
 class ConfigurationLoader {
 
 public:
+
+	//The name of the folder containing the settings.
+	const static std::string ESSENTIALS_FOLDER_NAME;
+	const static std::string FOLDER_DELIMITER;
+
 	//The names of the parameters in the config-file
 	const static std::string SEQUENCE_AROUND_LENGTH_NAME;
 	const static std::string SETTINGS_PREFERENCE_FILES_NAME;
+	const static std::string THERMO_CONFIG_LOCATION_NAME;
 
 	//The default values for the configuration parameters
 	const static int SEQUENCE_AROUND_LENGTH_DEFAULT;
 	const static std::string SETTINGS_PREFERENCE_FILE_DEFAULT;
+	const static std::string THERMO_CONFIG_LOCATION_DEFAULT;
 
 private:
 
