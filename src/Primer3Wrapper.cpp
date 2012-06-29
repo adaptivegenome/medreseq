@@ -39,7 +39,7 @@ const std::string Primer3Wrapper::PRIMER_COMPOSITE_FILE_EXTENSION = "medreseq";
 const std::string Primer3Wrapper::PRIMER_TERSE_FILE_EXTENSION = "primers";
 const std::string Primer3Wrapper::PRIMER_ERROR_FILE_NAME = "not-found";
 
-std::string Primer3Wrapper::PRIMER_THERMO_CONFIG_DEFAULT = ConfigurationLoader::THERMO_CONFIG_LOCATION_DEFAULT;
+std::string Primer3Wrapper::PRIMER_THERMO_CONFIG_DEFAULT = "essentials/primer3_config/";
 
 //=============================================================================================================
 //SinglePrimer class methods.
