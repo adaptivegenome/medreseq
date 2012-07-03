@@ -3,7 +3,7 @@
  * VCFAdapter.cpp:  The adapter for VCF inputs.
  *
  * Author: Sunil Kamalakar, VBI
- * Last modified: 22 June 2012
+ * Last modified: 03 July 2012
  *
  *********************************************************************
  *
@@ -32,6 +32,7 @@ const std::string VCFAdapter::REGION_CHROMOSOME_PREFIX = "chr";
 const int VCFAdapter::REGION_INDEX_PADDING = 5;
 const std::string VCFAdapter::VCF_FILE_EXTENTION = ".vcf";
 const std::string VCFAdapter::VCF_LINE_COMMENT_PATTERN = "\\s*#.*";
+const std::string VCFAdapter::VCF_LINE_TARGET_PATTERN = "^[A-Za-z0-9]+.+[0-9]+";
 const std::string VCFAdapter::VCF_TEMP_REGIONS_FILE = "temp-vcf.regions";
 
 bool VCFAdapter::isVCFFile(string fileLoc) {
@@ -111,6 +112,8 @@ string VCFAdapter::extractRegion(std::string &vcfLine) {
 
 vector<string> VCFAdapter::extractRegions(string vcfFileLoc) {
 
+	//TODO: Avoid duplicate code between this and file function.
+
 	//Read the VCF file and extract the region info.
 	vector<string> regionsVector;
 
@@ -125,7 +128,8 @@ vector<string> VCFAdapter::extractRegions(string vcfFileLoc) {
 	{
 		while(vcfFile.good()) {
 			getline(vcfFile,line);
-			if(!line.empty() && !Utility::regexMatch(line.c_str(), VCF_LINE_COMMENT_PATTERN.c_str())) {
+			if(!line.empty() && !Utility::regexMatch(line.c_str(), VCF_LINE_COMMENT_PATTERN.c_str()) &&
+						Utility::regexMatch(line.c_str(), VCF_LINE_TARGET_PATTERN.c_str())) {
 
 				//Now extract the information for each line and add it to the vector
 				string regionStr = extractRegion(line);
@@ -163,7 +167,8 @@ bool VCFAdapter::extractRegionsToFile(string vcfFileLoc, string regionsFileLoc) 
 	if(vcfFile.is_open() && regionOutFile.is_open()) {
 		while(vcfFile.good()) {
 			getline(vcfFile,line);
-			if(!line.empty() && !Utility::regexMatch(line.c_str(), VCF_LINE_COMMENT_PATTERN.c_str())) {
+			if(!line.empty() && !Utility::regexMatch(line.c_str(), VCF_LINE_COMMENT_PATTERN.c_str()) &&
+					Utility::regexMatch(line.c_str(), VCF_LINE_TARGET_PATTERN.c_str())) {
 
 				//Now extract the information for each line.
 				string regionStr = extractRegion(line);

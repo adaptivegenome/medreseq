@@ -3,7 +3,7 @@
  * SamtoolsWrapper.h:  The facade wrapper around the samtools library.
  *
  * Author: Sunil Kamalakar, VBI
- * Last modified: 22 June 2012
+ * Last modified: 03 July 2012
  *
  *********************************************************************
  *
@@ -115,7 +115,6 @@ bool SamtoolsWrapper::validateRegionInput(SequenceRegionInput seqInput) {
 	//in that case we do not create primers for those regions. Fix it if required.
 	if(startIndex > endIndex ||
 			startIndex < 0 || endIndex <= 0 ||
-			(startIndex - SEQUENCE_AROUND_LENGTH) < 0 ||
 			(endIndex + SEQUENCE_AROUND_LENGTH) <= 0) {
 		retVal = false;
 	}
@@ -126,14 +125,25 @@ bool SamtoolsWrapper::validateRegionInput(SequenceRegionInput seqInput) {
 SequenceRegionOutput SamtoolsWrapper::retrieveSequencesAroundRegion(SequenceRegionInput &region) {
 
 	SequenceRegionOutput seqRegOutput = SequenceRegionOutput(region, "", "", "");
-	string prev, target, next;
+	string prev = "", target = "", next = "";
 
 	//Validate the input so that every thing is in order for the region.
 	if(validateRegionInput(region)) {
 		//Prev region.
+		long prevRegStartIndex = region.getStartIndex() - SEQUENCE_AROUND_LENGTH;
+		long prevRegEndIndex = region.getStartIndex() - 1;
+
+		if(region.getStartIndex() >= 0 &&
+				prevRegStartIndex < 0 ) {
+			prevRegStartIndex = 0;
+			if(prevRegEndIndex < 0) {
+				prevRegEndIndex = 0;
+			}
+		}
+
 		SequenceRegionInput prevRegion = SequenceRegionInput(region.getRegionName(),
-									region.getStartIndex() - SEQUENCE_AROUND_LENGTH,
-									region.getStartIndex() - 1);
+									prevRegStartIndex,
+									prevRegEndIndex);
 
 		prev = this->retrieveSequenceForRegion(prevRegion);
 

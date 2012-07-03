@@ -3,7 +3,7 @@
  * VCFAdapter.h:  The adapter for VCF inputs.
  *
  * Author: Sunil Kamalakar, VBI
- * Last modified: 22 June 2012
+ * Last modified: 03 July 2012
  *
  *********************************************************************
  *
@@ -46,6 +46,10 @@ protected:
 
 	//The extension which is always present for any VCF file.
 	const static std::string VCF_FILE_EXTENTION;
+
+	//The extension which is always present for any VCF file.
+	const static std::string VCF_LINE_TARGET_PATTERN;
+
 
 public:
 

@@ -3,7 +3,7 @@
  * Utility.h:  The utility class for the project.
  *
  * Author: Sunil Kamalakar, VBI
- * Last modified: 22 June 2012
+ * Last modified: 03 July 2012
  *
  *********************************************************************
  *
@@ -15,6 +15,9 @@
 
 #ifndef UTILITY_H_
 #define UTILITY_H_
+
+#include <vector>
+#include <string>
 
 /*
  * The utility class which defines utility based static methods.

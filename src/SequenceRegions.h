@@ -4,7 +4,7 @@
 * 					  input structure for each region.
 *
 * Author: Sunil Kamalakar, VBI
-* Last modified: 22 June 2012
+* Last modified: 03 July 2012
 *
 *********************************************************************
 *
@@ -81,8 +81,9 @@ protected:
 
 public:
 	//Constructors
-	SequenceRegionOutput(SequenceRegionInput &, std::string, std::string, std::string);
 	SequenceRegionOutput() {};
+	SequenceRegionOutput(SequenceRegionInput &, std::string);
+	SequenceRegionOutput(SequenceRegionInput &, std::string, std::string, std::string);
 
 	//The getters and setters.
 	SequenceRegionInput getSeqRegInput();

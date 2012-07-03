@@ -3,7 +3,7 @@
  * Primer3Wrapper.cpp:  The facade wrapper around the primer3 library.
  *
  * Author: Sunil Kamalakar, VBI
- * Last modified: 22 June 2012
+ * Last modified: 03 July 2012
  *
  *********************************************************************
  *
@@ -37,9 +37,63 @@ using namespace std;
 //Assign the static members.
 const std::string Primer3Wrapper::PRIMER_COMPOSITE_FILE_EXTENSION = "medreseq";
 const std::string Primer3Wrapper::PRIMER_TERSE_FILE_EXTENSION = "primers";
-const std::string Primer3Wrapper::PRIMER_ERROR_FILE_NAME = "not-found";
+const std::string Primer3Wrapper::PRIMER_ERROR_FILE_NAME = "not_found";
 
 std::string Primer3Wrapper::PRIMER_THERMO_CONFIG_DEFAULT = "essentials/primer3_config/";
+bool Primer3Wrapper::IS_VERBOSE = false;
+int Primer3Wrapper::PRIMERS_PER_SEQUENCE = 1;
+int Primer3Wrapper::MAX_PRIMERS_PER_SEQUENCE = 5;
+
+//=============================================================================================================
+//PrimerPair class methods.
+
+SinglePrimer PrimerPair::getLeftPrimer() const {
+	return leftPrimer;
+}
+
+void PrimerPair::setLeftPrimer(SinglePrimer leftPrimer) {
+	this->leftPrimer = SinglePrimer(leftPrimer);
+}
+
+long PrimerPair::getPairAnyThCompl() const {
+	return pairAnyThCompl;
+}
+
+void PrimerPair::setPairAnyThCompl(long pairAnyThCompl) {
+	this->pairAnyThCompl = pairAnyThCompl;
+}
+
+long PrimerPair::getPairTemplateMisprimingTh() const {
+	return pairTemplateMisprimingTh;
+}
+
+void PrimerPair::setPairTemplateMisprimingTh(long pairTemplateMisprimingTh) {
+	this->pairTemplateMisprimingTh = pairTemplateMisprimingTh;
+}
+
+long PrimerPair::getPairThreeThCompl() const {
+	return pairThreeThCompl;
+}
+
+void PrimerPair::setPairThreeThCompl(long pairThreeThCompl) {
+	this->pairThreeThCompl = pairThreeThCompl;
+}
+
+int PrimerPair::getProductSize() const {
+	return productSize;
+}
+
+void PrimerPair::setProductSize(int productSize) {
+	this->productSize = productSize;
+}
+
+SinglePrimer PrimerPair::getRightPrimer() const {
+	return rightPrimer;
+}
+
+void PrimerPair::setRightPrimer(SinglePrimer rightPrimer) {
+	this->rightPrimer = SinglePrimer(rightPrimer);
+}
 
 //=============================================================================================================
 //SinglePrimer class methods.
@@ -111,7 +165,14 @@ float SinglePrimer::getThreeTh() const {
 //=============================================================================================================
 //PrimerOutput class methods.
 
+PrimerOutput::PrimerOutput() {
+
+}
+
 PrimerOutput::PrimerOutput(SequenceRegionOutput &seqOut, const  p3retval *p3retVal, const seq_args *sargs, string settingsFile) {
+
+	//this->leftPrimers = vector<SinglePrimer>(Primer3Wrapper::PRIMERS_PER_SEQUENCE);
+	//this->rightPrimers = vector<SinglePrimer>(Primer3Wrapper::PRIMERS_PER_SEQUENCE);
 
 	//Fill in the default values for the pair
 	this->seqOutput = seqOut;
@@ -134,38 +195,44 @@ PrimerOutput::PrimerOutput(SequenceRegionOutput &seqOut, const  p3retval *p3retV
 			//Atleast a single result needs to be returned
 			if(p3retVal->best_pairs.num_pairs >= 1) {
 
-				this->productSize = p3retVal->best_pairs.pairs[0].product_size;
-				this->pairAnyThCompl = p3retVal->best_pairs.pairs[0].compl_any;
-				this->pairThreeThCompl = p3retVal->best_pairs.pairs[0].compl_end;
-				this->pairTemplateMisprimingTh = p3retVal->best_pairs.pairs[0].template_mispriming;
+				for(int i=0; i < p3retVal->best_pairs.num_pairs; i++) {
+					// Pointers for the primer set just printing
+					primer_rec *fwd, *rev;
 
-				// Pointers for the primer set just printing
-				primer_rec *fwd, *rev;
+					fwd  = p3retVal->best_pairs.pairs[i].left;
+					rev  = p3retVal->best_pairs.pairs[i].right;
+					SinglePrimer fwdPrimer, revPrimer;
+					PrimerPair primerPair;
 
-				fwd  = p3retVal->best_pairs.pairs[0].left;
-				rev  = p3retVal->best_pairs.pairs[0].right;
+					primerPair.setProductSize(p3retVal->best_pairs.pairs[i].product_size);
+					primerPair.setPairAnyThCompl(p3retVal->best_pairs.pairs[i].compl_any);
+					primerPair.setPairThreeThCompl(p3retVal->best_pairs.pairs[i].compl_end);
+					primerPair.setPairTemplateMisprimingTh(p3retVal->best_pairs.pairs[i].template_mispriming);
 
-				//Values for the left primer.
-				this->leftPrimer.setSequence(string(pr_oligo_sequence(sargs, fwd)));
-				this->leftPrimer.setMeltingTemperature(fwd->temp);
-				this->leftPrimer.setGcPercent(fwd->gc_content);
-				this->leftPrimer.setStartIndex(fwd->start);
-				this->leftPrimer.setLength((int)fwd->length);
-				this->leftPrimer.setAnyTh(fwd->self_any);
-				this->leftPrimer.setThreeTh(fwd->self_end);
-				this->leftPrimer.setHairpin(fwd->hairpin_th);
+					//Values for the left primer.
+					fwdPrimer.setSequence(string(pr_oligo_sequence(sargs, fwd)));
+					fwdPrimer.setMeltingTemperature(fwd->temp);
+					fwdPrimer.setGcPercent(fwd->gc_content);
+					fwdPrimer.setStartIndex(fwd->start);
+					fwdPrimer.setLength((int)fwd->length);
+					fwdPrimer.setAnyTh(fwd->self_any);
+					fwdPrimer.setThreeTh(fwd->self_end);
+					fwdPrimer.setHairpin(fwd->hairpin_th);
 
-				//Values for the right primer
-				//Values for the left primer.
-				this->rightPrimer.setSequence(string(pr_oligo_rev_c_sequence(sargs, rev)));
-				this->rightPrimer.setMeltingTemperature(rev->temp);
-				this->rightPrimer.setGcPercent(rev->gc_content);
-				this->rightPrimer.setStartIndex(rev->start);
-				this->rightPrimer.setLength((int)rev->length);
-				this->rightPrimer.setAnyTh(rev->self_any);
-				this->rightPrimer.setThreeTh(rev->self_end);
-				this->rightPrimer.setHairpin(rev->hairpin_th);
+					//Values for the right primer
+					revPrimer.setSequence(string(pr_oligo_rev_c_sequence(sargs, rev)));
+					revPrimer.setMeltingTemperature(rev->temp);
+					revPrimer.setGcPercent(rev->gc_content);
+					revPrimer.setStartIndex(rev->start);
+					revPrimer.setLength((int)rev->length);
+					revPrimer.setAnyTh(rev->self_any);
+					revPrimer.setThreeTh(rev->self_end);
+					revPrimer.setHairpin(rev->hairpin_th);
 
+					primerPair.setLeftPrimer(fwdPrimer);
+					primerPair.setRightPrimer(revPrimer);
+					this->primerPairs.push_back(primerPair);
+				}
 			}
 			else {
 				this->setGlobalError("No primers were returned.");
@@ -201,54 +268,6 @@ void PrimerOutput::setSeqOutput(SequenceRegionOutput seqOutput) {
 	this->seqOutput = seqOutput;
 }
 
-SinglePrimer PrimerOutput::getLeftPrimer() const {
-	return leftPrimer;
-}
-
-void PrimerOutput::setLeftPrimer(SinglePrimer leftPrimer) {
-	this->leftPrimer = leftPrimer;
-}
-
-SinglePrimer PrimerOutput::getRightPrimer() const {
-	return rightPrimer;
-}
-
-void PrimerOutput::setRightPrimer(SinglePrimer rightPrimer) {
-	this->rightPrimer = rightPrimer;
-}
-
-long PrimerOutput::getPairAnyThCompl() const {
-	return pairAnyThCompl;
-}
-
-void PrimerOutput::setPairAnyThCompl(long pairAnyThCompl) {
-	this->pairAnyThCompl = pairAnyThCompl;
-}
-
-long PrimerOutput::getPairThreeThCompl() const {
-	return pairThreeThCompl;
-}
-
-void PrimerOutput::setPairThreeThCompl(long pairThreeThCompl) {
-	this->pairThreeThCompl = pairThreeThCompl;
-}
-
-int PrimerOutput::getProductSize() const {
-	return productSize;
-}
-
-void PrimerOutput::setProductSize(int productSize) {
-	this->productSize = productSize;
-}
-
-long PrimerOutput::getPairTemplateMisprimingTh() const {
-	return pairTemplateMisprimingTh;
-}
-
-void PrimerOutput::setPairTemplateMisprimingTh(long pairTemplateMisprimingTh) {
-	this->pairTemplateMisprimingTh = pairTemplateMisprimingTh;
-}
-
 std::string PrimerOutput::getGlobalError() const {
 	return globalError;
 }
@@ -275,6 +294,14 @@ void PrimerOutput::setWarning(std::string warning) {
 
 std::string PrimerOutput::getSettingsFile() const {
 	return settingsFile;
+}
+
+std::vector<PrimerPair> PrimerOutput::getPrimerPairs() const {
+	return primerPairs;
+}
+
+void PrimerOutput::setPrimerPairs(std::vector<PrimerPair> primerPairs) {
+	this->primerPairs = primerPairs;
 }
 
 void PrimerOutput::setSettingsFile(std::string settingsFile) {
@@ -384,7 +411,13 @@ bool Primer3Wrapper::fillPrimerParameters(Primer3Settings &primerSettings) {
 	}
 
 	//Make custom parameters adjustment to the global settings.
-	primerSettings.globalSetting->num_return = 1;
+	if(PRIMERS_PER_SEQUENCE < 0 || PRIMERS_PER_SEQUENCE > MAX_PRIMERS_PER_SEQUENCE) {
+		primerSettings.globalSetting->num_return = MAX_PRIMERS_PER_SEQUENCE;
+	}
+	else {
+		primerSettings.globalSetting->num_return = PRIMERS_PER_SEQUENCE;
+	}
+
 
 	if (fatal_parse_err.data != NULL) {
 		cerr << "Fatal error" << endl;
@@ -467,10 +500,10 @@ bool Primer3Wrapper::createPrimers(vector<string> settingsFiles,
 
 	for (int i = 0; i < numOfSettingFiles; ++i) {
 		string extractedFileName = extractOutputFileName(string(settingsFiles[i]));
-		primerFileName[i] = extractedFileName + "." + PRIMER_TERSE_FILE_EXTENSION;
+		primerFileName[i] = outputFileLoc + "-" + extractedFileName + "." + PRIMER_TERSE_FILE_EXTENSION;
 		isWrittenToFile[i] = false;
 	}
-	primerFileName[numOfSettingFiles] = string(PRIMER_ERROR_FILE_NAME + "." + PRIMER_TERSE_FILE_EXTENSION);
+	primerFileName[numOfSettingFiles] = string(outputFileLoc + "-" + PRIMER_ERROR_FILE_NAME + "." + PRIMER_TERSE_FILE_EXTENSION);
 	isWrittenToFile[numOfSettingFiles] = false;
 
 	//Iterate over all the region inputs
@@ -571,7 +604,7 @@ p3retval* Primer3Wrapper::createPrimers(Primer3Settings &primerSettings,
 
 	//Set the sequence and target inforamtion.
 	p3_set_sa_sequence(primerSettings.sequenceSetting, seqRegOutput.getCompleteSequence().c_str());
-	p3_add_to_sa_tar2(primerSettings.sequenceSetting, (int)seqRegOutput.getPrevSequence().length(), (int)seqRegOutput.getTargetSequence().length());
+	p3_add_to_sa_tar2(primerSettings.sequenceSetting, (int)seqRegOutput.getPrevSequence().length() + 1, (int)seqRegOutput.getTargetSequence().length());
 
 	p3_set_gs_primer_file_flag(primerSettings.globalSetting, 0);
     retval = choose_primers(primerSettings.globalSetting, primerSettings.sequenceSetting);
@@ -580,7 +613,9 @@ p3retval* Primer3Wrapper::createPrimers(Primer3Settings &primerSettings,
     	return retval;
     }
 
-	//print_boulder(4, primerSettings.globalSetting, primerSettings.sequenceSetting, retval, 0);
+    if(IS_VERBOSE) {
+    	print_boulder(4, primerSettings.globalSetting, primerSettings.sequenceSetting, retval, 0);
+    }
 
 	return retval;
 
@@ -655,6 +690,9 @@ string Primer3Wrapper::printPrimer(PrimerOutput primerOut, bool isTerse/*=false*
 	if(!isTerse) {
 		retVal << ">" << primerOut.getSeqOutput().getSeqRegInput().toString() << endl <<
 								primerOut.getSeqOutput().getCompleteSequence(true) << endl;
+		retVal << "Target: [" << primerOut.getSeqOutput().getPrevSequence().length() + 1 << "," <<
+				primerOut.getSeqOutput().getTargetSequence().length() << "]" << endl <<
+				"Settings file : " << primerOut.getSettingsFile() << endl;
 
 			if(!primerOut.getGlobalError().empty()) {
 				retVal << "ERROR: " << primerOut.getGlobalError() << endl << endl;
@@ -668,22 +706,31 @@ string Primer3Wrapper::printPrimer(PrimerOutput primerOut, bool isTerse/*=false*
 					retVal << "WARNING: " << primerOut.getWarning() << endl;
 				}
 
-				retVal << "Target: [" << primerOut.getSeqOutput().getPrevSequence().length() << "," <<
-						primerOut.getSeqOutput().getTargetSequence().length() << "]" << endl <<
-						"Settings file : " << primerOut.getSettingsFile() << endl <<
-						this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), true) << "=" <<
-						primerOut.getLeftPrimer().getSequence() <<
-						"| Start: " << primerOut.getLeftPrimer().getStartIndex()  + 1 << " " <<
-						"| Length: " << primerOut.getLeftPrimer().getLength() << " " <<
-						"| Temperature: " << (int)primerOut.getLeftPrimer().getMeltingTemperature() << " " <<
-						"| GC%: " << primerOut.getLeftPrimer().getGcPercent() << endl <<
-						this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), false) << "=" <<
-						primerOut.getRightPrimer().getSequence() <<
-						"| Start: " << primerOut.getRightPrimer().getStartIndex() + 1 << " " <<
-						"| Length: " << primerOut.getRightPrimer().getLength() << " " <<
-						"| Temperature: " << (int)primerOut.getRightPrimer().getMeltingTemperature() << " " <<
-						"| GC%: " << primerOut.getRightPrimer().getGcPercent() << endl <<
-						"Overall Product size: " << primerOut.getProductSize() << endl << endl;
+				vector<PrimerPair> primerPairs = primerOut.getPrimerPairs();
+				for(unsigned int i=0; i < primerPairs.size(); i++) {
+
+					PrimerPair primerPair = primerPairs[i];
+					SinglePrimer leftPrimer = primerPair.getLeftPrimer();
+					SinglePrimer rightPrimer = primerPair.getRightPrimer();
+
+					if(i >= 1) {
+						retVal << "Alternative Primer " << i << ":" << endl;
+					}
+					retVal << this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), true) << "=" <<
+							leftPrimer.getSequence() <<
+							"| Start: " << leftPrimer.getStartIndex()  + 1 << " " <<
+							"| Length: " << leftPrimer.getLength() << " " <<
+							"| Temperature: " << (int)leftPrimer.getMeltingTemperature() << " " <<
+							"| GC%: " << leftPrimer.getGcPercent() << endl <<
+							this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), false) << "=" <<
+							rightPrimer.getSequence() <<
+							"| Start: " << rightPrimer.getStartIndex() + 1 << " " <<
+							"| Length: " << rightPrimer.getLength() << " " <<
+							"| Temperature: " << (int)rightPrimer.getMeltingTemperature() << " " <<
+							"| GC%: " << rightPrimer.getGcPercent() << endl <<
+							"Overall Product size: " << primerPair.getProductSize() << endl;
+				}
+				retVal << endl;
 			}
 	}
 	else {
@@ -706,13 +753,12 @@ string Primer3Wrapper::printPrimer(PrimerOutput primerOut, bool isTerse/*=false*
 			}
 
 			retVal << this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), true) << ", " <<
-					primerOut.getLeftPrimer().getSequence() << endl <<
+					(((PrimerPair)(primerOut.getPrimerPairs()[0])).getLeftPrimer()).getSequence() << endl <<
 					this->outputPrintRegion(primerOut.getSeqOutput().getSeqRegInput(), false) << ", " <<
-					primerOut.getRightPrimer().getSequence() << endl;
+					(((PrimerPair)(primerOut.getPrimerPairs()[0])).getRightPrimer()).getSequence() << endl;
 		}
 
 	}
-
 
 	return retVal.str();
 }

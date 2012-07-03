@@ -24,32 +24,35 @@ LIBS	   = -Lprimer3/src -Lsamtools -lbam -lprimer3 -ldpal -loligotm -lthal -lbou
 
 CFLAGS  = $(CC_OPTS) $(O_OPTS)
 
-OBJS = main.o sequenceRegions.o samWrapper.o primer3wrapper.o vcfExtractor.o utility.o config.o
+OBJS = utility.o  config.o  sequenceRegions.o vcfExtractor.o sequenceAdapter.o samWrapper.o primer3wrapper.o  main.o
 NAME = MedReseq
 
 $(NAME): $(OBJS)
 	$(CPP) -o $@ $(OBJS) $(LIBS)
-
-main.o:
-	$(CPP) $(CFLAGS) $(INCLUDES) $ src/main.cpp -o $@
-	
-sequenceRegions.o:
-	$(CPP) $(CFLAGS) $(INCLUDES) $ src/SequenceRegions.cpp -o $@
-	
-samWrapper.o:
-	$(CPP) $(CFLAGS) $(INCLUDES) $ src/SamtoolsWrapper.cpp -o $@
-
-primer3wrapper.o:
-	$(CPP) $(CFLAGS) $(INCLUDES) $ src/Primer3Wrapper.cpp -o $@
-	
-vcfExtractor.o:
-	$(CPP) $(CFLAGS) $(INCLUDES) $ src/VCFAdapter.cpp -o $@
 	
 utility.o:
 	$(CPP) $(CFLAGS) $(INCLUDES) $ src/Utility.cpp -o $@
 
 config.o:
 	$(CPP) $(CFLAGS) $(INCLUDES) $ src/ConfigurationLoader.cpp -o $@
+	
+sequenceRegions.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/SequenceRegions.cpp -o $@
+
+vcfExtractor.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/VCFAdapter.cpp -o $@
+	
+sequenceAdapter.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/SequencesAdapter.cpp -o $@
+	
+samWrapper.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/SamtoolsWrapper.cpp -o $@
+
+primer3wrapper.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/Primer3Wrapper.cpp -o $@
+
+main.o:
+	$(CPP) $(CFLAGS) $(INCLUDES) $ src/main.cpp -o $@
 	
 clean:
 	rm *.o $(NAME)

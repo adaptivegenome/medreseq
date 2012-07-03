@@ -4,7 +4,7 @@
  * project level configurations.
  *
  * Author: Sunil Kamalakar, VBI
- * Last modified: 22 June 2012
+ * Last modified: 03 July 2012
  *
  *********************************************************************
  *
@@ -37,6 +37,9 @@ private:
 	//The parameter for thermodynamic setting in primer3
 	std::string termoConfigLoc;
 
+	//The number of primer generated per sequence.
+	int primersPerSequence;
+
 	//The list of settings files in the order of preference.
 	std::vector<std::string> settingsFiles;
 
@@ -54,9 +57,10 @@ public:
 	void setSeqArndLength(int seqArndLength);
 	std::vector<std::string> getSettingsFiles() const;
 	void setSettingsFiles(std::vector<std::string> settingsFiles);
-
 	std::string getTermoConfigLoc() const;
 	void setTermoConfigLoc(std::string termoConfigLoc);
+	int getPrimersPerSequence() const;
+	void setPrimersPerSequence(int primersPerSequence);
 };
 
 /**
@@ -75,11 +79,13 @@ public:
 	const static std::string SEQUENCE_AROUND_LENGTH_NAME;
 	const static std::string SETTINGS_PREFERENCE_FILES_NAME;
 	const static std::string THERMO_CONFIG_LOCATION_NAME;
+	const static std::string PRIMERS_PER_SEQUENCE_NAME;
 
 	//The default values for the configuration parameters
 	const static int SEQUENCE_AROUND_LENGTH_DEFAULT;
 	const static std::string SETTINGS_PREFERENCE_FILE_DEFAULT;
 	const static std::string THERMO_CONFIG_LOCATION_DEFAULT;
+	const static int PRIMERS_PER_SEQUENCE_DEFAULT;
 
 private:
 

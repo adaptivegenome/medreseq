@@ -4,7 +4,7 @@
  * project level configurations.
  *
  * Author: Sunil Kamalakar, VBI
- * Last modified: 22 June 2012
+ * Last modified: 03 July 2012
  *
  *********************************************************************
  *
@@ -35,6 +35,7 @@ const std::string ConfigurationLoader::FOLDER_DELIMITER = "/";
 const std::string ConfigurationLoader::SEQUENCE_AROUND_LENGTH_NAME = "SEQUENCE_AROUND_LENGTH";
 const std::string ConfigurationLoader::SETTINGS_PREFERENCE_FILES_NAME = "SETTINGS_PREFERENCE_FILES";
 const std::string ConfigurationLoader::THERMO_CONFIG_LOCATION_NAME = "THERMO_CONFIG_LOCATION";
+const std::string ConfigurationLoader::PRIMERS_PER_SEQUENCE_NAME = "PRIMERS_PER_SEQUENCE";
 
 //The default values for the configuration parameters
 const int ConfigurationLoader::SEQUENCE_AROUND_LENGTH_DEFAULT = 500;
@@ -42,6 +43,7 @@ const std::string ConfigurationLoader::SETTINGS_PREFERENCE_FILE_DEFAULT = ESSENT
 																		  "tier1.settings";
 const std::string ConfigurationLoader::THERMO_CONFIG_LOCATION_DEFAULT = ESSENTIALS_FOLDER_NAME + FOLDER_DELIMITER +
 																		"primer3_config" + FOLDER_DELIMITER;
+const int ConfigurationLoader::PRIMERS_PER_SEQUENCE_DEFAULT = 1;
 
 //=============================================================================================================
 //Configuration holder class methods
@@ -91,12 +93,19 @@ std::string ConfigurationHolder::getTermoConfigLoc() const {
 	return termoConfigLoc;
 }
 
+int ConfigurationHolder::getPrimersPerSequence() const {
+	return primersPerSequence;
+}
+
+void ConfigurationHolder::setPrimersPerSequence(int primersPerSequence) {
+	this->primersPerSequence = primersPerSequence;
+}
+
 void ConfigurationHolder::setTermoConfigLoc(std::string termoConfigLoc) {
 	this->termoConfigLoc = termoConfigLoc;
 }
 
-void ConfigurationHolder::setSettingsFiles(
-		std::vector<std::string> settingsFiles) {
+void ConfigurationHolder::setSettingsFiles(std::vector<std::string> settingsFiles) {
 	this->settingsFiles = settingsFiles;
 }
 
@@ -183,6 +192,16 @@ ConfigurationHolder ConfigurationLoader::obtainConfigurationSettings(std::string
 						configHolder.setTermoConfigLoc(THERMO_CONFIG_LOCATION_DEFAULT);
 					}
 				}
+				else if(Utility::regexMatch(line.c_str(), PRIMERS_PER_SEQUENCE_NAME.c_str())) {
+					std::string primerPerSeqStr = (Utility::split(line, "="))[1];
+					int primersPerSeq = atoi(primerPerSeqStr.c_str());
+					if(!primerPerSeqStr.empty()) {
+						configHolder.setPrimersPerSequence(primersPerSeq);
+					}
+					else {
+						configHolder.setPrimersPerSequence(PRIMERS_PER_SEQUENCE_DEFAULT);
+					}
+				}
 			}
 		}
 		configFile.close();
@@ -195,6 +214,7 @@ void ConfigurationLoader::applyConfigurationSetting(ConfigurationHolder &configH
 
 	SamtoolsWrapper::SEQUENCE_AROUND_LENGTH = configHolder.getSeqArndLength();
 	Primer3Wrapper::PRIMER_THERMO_CONFIG_DEFAULT = configHolder.getTermoConfigLoc();
+	Primer3Wrapper::PRIMERS_PER_SEQUENCE = configHolder.getPrimersPerSequence();
 }
 
 //=============================================================================================================

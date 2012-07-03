@@ -3,7 +3,7 @@
  * Primer3Wrapper.h:  The facade wrapper around the primer3 library.
  *
  * Author: Sunil Kamalakar, VBI
- * Last modified: 22 June 2012
+ * Last modified: 03 July 2012
  *
  *********************************************************************
  *
@@ -23,6 +23,8 @@
 #include "libprimer3.h"
 #include "SequenceRegions.h"
 #include "ConfigurationLoader.h"
+
+class Primer3Wrapper;
 
 /*
  * This class represents the properties of a single primer.
@@ -77,20 +79,12 @@ public:
 };
 
 /**
- * This class represents the overall output that is provided from primer3
- * for a given pair of primers. It holds information about the whole primer
- * and about the forward and reverse primers.
+ * This class represents a single primer pair including left and right primers and their
+ * combined parameters
  */
-class PrimerOutput {
+class PrimerPair {
 
 protected:
-
-	//The output of sequence regions.
-	SequenceRegionOutput seqOutput;
-
-	//The settings file used to generate this primer.
-	std::string settingsFile;
-
 	//The left primer
 	SinglePrimer leftPrimer;
 
@@ -105,6 +99,40 @@ protected:
 	long pairThreeThCompl;
 	long pairTemplateMisprimingTh;
 
+public:
+	PrimerPair() {};
+	SinglePrimer getLeftPrimer() const;
+	void setLeftPrimer(SinglePrimer leftPrimer);
+	SinglePrimer getRightPrimer() const;
+	void setRightPrimer(SinglePrimer rightPrimer);
+	long getPairAnyThCompl() const;
+	void setPairAnyThCompl(long pairAnyThCompl);
+	long getPairTemplateMisprimingTh() const;
+	void setPairTemplateMisprimingTh(long pairTemplateMisprimingTh);
+	long getPairThreeThCompl() const;
+	void setPairThreeThCompl(long pairThreeThCompl);
+	int getProductSize() const;
+	void setProductSize(int productSize);
+};
+
+/**
+ * This class represents the overall output that is provided from primer3
+ * for a given pair of primers. It holds information about the whole primer
+ * and about the forward and reverse primers.
+ */
+class PrimerOutput {
+
+protected:
+
+	//The output of sequence regions.
+	SequenceRegionOutput seqOutput;
+
+	//The settings file used to generate this primer.
+	std::string settingsFile;
+
+	//The primer pairs.
+	std::vector<PrimerPair> primerPairs;
+
 	//Error and warning messages.
 	std::string globalError;
 	std::string sequenceError;
@@ -113,7 +141,7 @@ protected:
 public:
 
 	//Default constructor
-	PrimerOutput() {};
+	PrimerOutput();
 
 	//The consturctor which takes in the necessary value from different primers and
 	//creates the overall primer output object.
@@ -122,18 +150,6 @@ public:
 	//The setters and getters.
 	SequenceRegionOutput getSeqOutput();
 	void setSeqOutput(SequenceRegionOutput seqOutput);
-	SinglePrimer getLeftPrimer() const;
-	void setLeftPrimer(SinglePrimer leftPrimer);
-	long getPairAnyThCompl() const;
-	void setPairAnyThCompl(long pairAnyThCompl);
-	long getPairThreeThCompl() const;
-	void setPairThreeThCompl(long pairThreeThCompl);
-	int getProductSize() const;
-	void setProductSize(int productSize);
-	SinglePrimer getRightPrimer() const;
-	void setRightPrimer(SinglePrimer rightPrimer);
-	long getPairTemplateMisprimingTh() const;
-	void setPairTemplateMisprimingTh(long pairTemplateMisprimingTh);
 	std::string getGlobalError() const;
 	void setGlobalError(std::string globalError);
 	std::string getSequenceError() const;
@@ -142,6 +158,8 @@ public:
 	void setWarning(std::string warning);
 	std::string getSettingsFile() const;
 	void setSettingsFile(std::string settingsFile);
+	std::vector<PrimerPair> getPrimerPairs() const;
+	void setPrimerPairs(std::vector<PrimerPair> primerPairs);
 };
 
 /*
@@ -190,6 +208,15 @@ public:
 
 	//The link to the primer3 config required to themodynamic allignment.
 	static std::string PRIMER_THERMO_CONFIG_DEFAULT;
+
+	//The static variable which represents a verbose output.
+	static bool IS_VERBOSE;
+
+	//Indicates the primers per sequence
+	static int PRIMERS_PER_SEQUENCE;
+
+	//Indicates the maximum number of primers allowed for a single sequence.
+	static int MAX_PRIMERS_PER_SEQUENCE;
 
 	//The default constructor and destructor
 	Primer3Wrapper();

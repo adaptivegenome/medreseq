@@ -4,7 +4,7 @@
 * 					  input structure for each region.
 *
 * Author: Sunil Kamalakar, VBI
-* Last modified: 22 June 2012
+* Last modified: 03 July 2012
 *
 *********************************************************************
 *
@@ -110,6 +110,27 @@ string SequenceRegionInput::toString() {
 
 //=============================================================================================================
 //SequenceRegionOutput class methods.
+
+SequenceRegionOutput::SequenceRegionOutput(SequenceRegionInput &seqInput, string completeSequence) {
+
+	string prev = "";
+	string target = "";
+	string next = "";
+
+	size_t prevPos = completeSequence.find("[");
+	prev = completeSequence.substr(0, prevPos);
+
+	size_t nextPos = completeSequence.find("]");
+	next = completeSequence.substr(nextPos + 1);
+
+	target = completeSequence.substr(prevPos + 1, nextPos - prevPos - 1);
+
+	this->prevSequence  = prev;
+	this->targetSequence = target;
+	this->nextSequence = next;
+	this->seqRegInput = seqInput;
+}
+
 
 SequenceRegionOutput::SequenceRegionOutput(SequenceRegionInput &seqInput, string prev, string target, string next) {
 
