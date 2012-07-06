@@ -39,7 +39,7 @@ SamtoolsWrapper::~SamtoolsWrapper() {
 
 	//Delete the fai index
 	if(fai != NULL) {
-		free(fai);
+		fai_destroy(fai);
 	}
 
 	//Delete the temporary regions file if it exists
