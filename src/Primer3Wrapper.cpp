@@ -585,7 +585,6 @@ PrimerOutput Primer3Wrapper::createPrimers(string settingsFile, SequenceRegionOu
 	thermodynamic_path_changed = 1;
 	this->fillPrimerParameters(primerSettings);
 
-	primerSettings.sequenceSetting = create_seq_arg();
 	p3retval *retVal = createPrimers(primerSettings, seqRegOut);
 	primerOut = PrimerOutput(seqRegOut, retVal, primerSettings.sequenceSetting, primerSettings.settingsFile);
 
