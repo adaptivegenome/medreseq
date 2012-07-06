@@ -116,7 +116,7 @@ std::vector<std::string> ConfigurationLoader::obtainSettingsFilesArray(std::stri
 
 	std::vector<std::string> settingsFiles;
 
-	char* settingsStrPtr = new char[settingsStr.length()];
+	char* settingsStrPtr = new char[settingsStr.length() + 1];
 	std::strcpy(settingsStrPtr, settingsStr.c_str());
 
 	char* settingsPtr = std::strtok(settingsStrPtr, delimiter.c_str());
@@ -133,7 +133,8 @@ std::vector<std::string> ConfigurationLoader::obtainSettingsFilesArray(std::stri
 
 		settingsPtr = std::strtok(NULL, delimiter.c_str());
 	}
-
+	
+	delete settingsStrPtr;
 	return settingsFiles;
 }
 
